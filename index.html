@@ -3,19 +3,18 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CSAT Dashboard (API Powered)</title>
+  <title>CSAT Dashboard (Enterprise)</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   
   <style>
-    /* SAARA PURANA CSS SAME RAKHA HAI, UI MAST RAHEGA */
     :root { --primary: #ff7b2c; --secondary: #1f2235; --accent: #3d4466; --bg: #f4f6fb; --blue: #3498db; --success: #2ecc71; --danger: #e74c3c; --warning: #f39c12; --purple: #9b59b6; }
-    body { margin: 0; font-family: 'Segoe UI', sans-serif; background: var(--bg); color: #333; overflow-x: hidden; }
+    body { margin: 0; font-family: 'Segoe UI', Tahoma, sans-serif; background: var(--bg); color: #333; overflow-x: hidden; }
     .layout { display: flex; min-height: 100vh; }
-    .sidebar { width: 220px; background: var(--secondary); color: white; padding: 20px; position: fixed; height: 100vh; z-index: 1000; }
+    .sidebar { width: 220px; background: var(--secondary); color: white; padding: 20px; position: fixed; height: 100vh; z-index: 1000; overflow-y: auto; }
     .sidebar h2 { color: var(--primary); margin-bottom: 30px; font-size: 1.4rem; font-weight: 800; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 15px; }
-    .sidebar ul { list-style: none; padding: 0; }
+    .sidebar ul { list-style: none; padding: 0; margin: 0; }
     .sidebar li { padding: 12px 15px; cursor: pointer; opacity: 0.8; border-radius: 8px; margin-bottom: 10px; transition: 0.2s; font-weight: 500; }
     .sidebar li.active { background: var(--primary); color: white; opacity: 1; box-shadow: 0 4px 10px rgba(255,123,44,0.3); }
     .sidebar li:hover:not(.active) { background: rgba(255,255,255,0.1); opacity: 1; }
@@ -41,7 +40,6 @@
     .main-row:hover { background: #f8f9fa; }
     @media (max-width: 1024px) { .chart-container { grid-template-columns: 1fr; } .content-section { height: 220px; } }
     @media (max-width: 768px) { .sidebar { width: 0; padding: 0; overflow: hidden; display:none; } .main { margin-left: 0; width: 100%; padding: 15px;} .filters { grid-template-columns: 1fr; } .detail-row-content { grid-template-columns: 1fr; } }
-    /* Mobile Menu Bar */
     .mobile-menu { display: none; background: var(--secondary); color: white; padding: 15px; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 999; }
     .mobile-menu select { width: 60%; background: white; color: black; border:none; padding: 8px;}
     @media (max-width: 768px) { .mobile-menu { display: flex; } }
@@ -52,7 +50,7 @@
 <div class="mobile-menu">
   <strong style="color:var(--primary);">CSAT App</strong>
   <select onchange="switchView(this.value)">
-    <option value="dash">Dashboard</option> <option value="feed">Feedback</option> <option value="tick">Ticketing</option> <option value="onboard">Onboarding</option> <option value="enroll">Enrollment</option> <option value="nsdc">NSDC</option> <option value="tasks">Tasks</option>
+    <option value="dash">Dashboard</option> <option value="feed">Feedback</option> <option value="tick">Ticketing</option> <option value="onboard">Onboarding</option> <option value="enroll">Enrollment</option> <option value="nsdc">NSDC</option> <option value="tasks">Tasks</option> <option value="report">Reports</option>
   </select>
 </div>
 
@@ -67,6 +65,7 @@
       <li id="m-enroll" onclick="switchView('enroll')">Onboarding Data</li> 
       <li id="m-nsdc" onclick="switchView('nsdc')">NSDC / Certificate</li> 
       <li id="m-tasks" onclick="switchView('tasks')">Daily Tasks</li>
+      <li id="m-report" onclick="switchView('report')">📊 Analytics Reports</li>
     </ul>
   </div>
 
@@ -115,6 +114,30 @@
       <div class="form-section" style="min-height: auto; margin-bottom: 20px; padding: 25px;"><h3 style="margin-top:0">Assign Daily Task</h3><div style="display:grid; grid-template-columns: 2fr 1fr 1fr auto; gap:12px; align-items:end;"><input type="text" id="task-name" placeholder="Enter Task Name..."><select id="task-exec"><option value="Kumud">Kumud</option><option value="Sanskriti">Sanskriti</option><option value="Dhananjaya">Dhananjaya</option></select><select id="task-status"><option value="Pending">Pending</option><option value="Done">Done</option></select><button class="btn-apply" onclick="submitTask()">Add Task</button></div></div>
       <div class="table-wrapper"><table><thead><tr><th>Date</th><th>Task Name</th><th>Executive</th><th>Status</th><th>Action</th></tr></thead><tbody id="tasks-body"></tbody></table></div>
     </div>
+
+    <div id="view-report" class="hidden">
+      <div class="filters" style="grid-template-columns: 1fr 1fr 1fr auto;">
+        <div class="filter-group">Format <select id="rep-group"><option value="monthly">Month Wise</option><option value="daily">Date Wise</option></select></div>
+        <div class="filter-group">Start <input type="date" id="rep-start"></div>
+        <div class="filter-group">End <input type="date" id="rep-end"></div>
+        <button class="btn-apply" onclick="loadReportsData()">Generate Report</button>
+      </div>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+        <div class="table-wrapper" style="margin-top:0;">
+          <h3 style="margin-top:0; color:var(--primary);">1. NPS Report (Overall)</h3>
+          <table><thead><tr><th>Timeline</th><th>Total Feedback</th><th>NPS Score</th></tr></thead><tbody id="rep-nps-body"></tbody></table>
+        </div>
+        <div class="table-wrapper" style="margin-top:0;">
+          <h3 style="margin-top:0; color:var(--blue);">2. Trainer Performance</h3>
+          <table><thead><tr><th>Trainer Name</th><th>Feedback Count</th><th>Trainer NPS</th></tr></thead><tbody id="rep-trainer-body"></tbody></table>
+        </div>
+        <div class="table-wrapper" style="grid-column: 1 / -1;">
+          <h3 style="margin-top:0; color:var(--purple);">3. Operations & CSAT Report</h3>
+          <table><thead><tr><th>Timeline</th><th>Tasks Completed</th><th>Onboarding Count</th><th>NSDC/Certifications</th></tr></thead><tbody id="rep-ops-body"></tbody></table>
+        </div>
+      </div>
+    </div>
+
   </div>
 </div>
 
@@ -122,10 +145,9 @@
   Chart.register(ChartDataLabels); let gChart, dChart, oChart; 
   const theme = { orange: '#ff7b2c', navy: '#1f2235', blue: '#3498db', light: '#f0f2f5', purple: '#9b59b6' };
 
-  // ⚠️⚠️ YAHAN APNA NAYA WEB APP URL PASTE KARO ⚠️⚠️
-  const API_URL = "https://script.google.com/macros/s/AKfycbzZvoyP-WOdDdUFmktk3XS79mIOkq7sWjAcBBXWthAQBwHmMBJRP33PUE_qkusfqxWb/exec"; // Ise badal dena naye deploy ke baad!
+  // ⚠️⚠️ YAHAN APNA WEB APP URL PASTE KARO ⚠️⚠️
+  const API_URL = "https://script.google.com/macros/s/AKfycbxi9OJDMRXva7lZH_VZA17bHUAfNFE8GuB9kYYMRqZ68gVBzWTa42L3vgzxEup-uFOh/exec"; 
 
-  /* --- API FETCH WRAPPERS --- */
   async function apiGet(action, params = {}) {
     try {
       let url = new URL(API_URL);
@@ -138,19 +160,13 @@
 
   async function apiPost(action, dataObj = {}) {
     try {
-      let res = await fetch(API_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // GAS Bypass
-        body: JSON.stringify({ action: action, data: dataObj }),
-        redirect: "follow"
-      });
+      let res = await fetch(API_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: action, data: dataObj }), redirect: "follow" });
       return await res.json();
     } catch (e) { console.error("API POST Error:", e); return { error: e }; }
   }
 
   function setSyncing(isSyncing) { document.querySelectorAll('.card, .content-section, .table-wrapper').forEach(el => isSyncing ? el.classList.add('syncing') : el.classList.remove('syncing')); }
 
-  /* --- CHARTS --- */
   function renderCharts(s) {
     if(gChart) gChart.destroy(); if(dChart) dChart.destroy();
     const centerPlugin = { id: 'centerPlugin', afterDraw(chart) { const {ctx, chartArea: {top, bottom, left, right, height}} = chart; ctx.save(); const centerX = (left + right)/2; const centerY = (top + bottom)/2; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.font = `bold ${(height / 3).toFixed(0)}px Segoe UI`; ctx.fillStyle = '#000000'; ctx.fillText(s.nps, centerX, centerY + (height / 8)); ctx.font = `600 ${(height / 8).toFixed(0)}px Segoe UI`; ctx.fillStyle = '#888888'; ctx.fillText("CSAT", centerX, centerY + (height / 3.2)); ctx.restore(); } };
@@ -168,12 +184,19 @@
     document.querySelectorAll('[id^="view-"]').forEach(el => el.classList.add('hidden')); document.getElementById('view-' + v).classList.remove('hidden');
     document.querySelectorAll('.sidebar li').forEach(el => el.classList.remove('active')); 
     let activeTab = document.getElementById('m-' + v); if(activeTab) activeTab.classList.add('active');
-    let titleText = v.toUpperCase(); if (v === 'dash') titleText = 'DASHBOARD'; if (v === 'tick') titleText = 'TICKETING'; if (v === 'enroll') titleText = 'ONBOARDING DATA'; if (v === 'nsdc') titleText = 'NSDC / CERTIFICATE'; if (v === 'tasks') titleText = 'DAILY TASKS'; document.getElementById('page-title').innerText = titleText;
     
-    if(v === 'dash') loadDashboardData(); if(v === 'feed') loadFeedbackData(); if(v === 'tick') loadTickets(); if(v === 'onboard') loadOnboardTable(); if(v === 'enroll') loadEnrollData(); if(v === 'nsdc') loadNsdcData(); if(v === 'tasks') loadTasks(); 
+    let titleText = v.toUpperCase(); 
+    if (v === 'dash') titleText = 'DASHBOARD'; 
+    if (v === 'tick') titleText = 'TICKETING'; 
+    if (v === 'enroll') titleText = 'ONBOARDING DATA'; 
+    if (v === 'nsdc') titleText = 'NSDC / CERTIFICATE'; 
+    if (v === 'tasks') titleText = 'DAILY TASKS'; 
+    if (v === 'report') titleText = 'ANALYTICS REPORTS';
+    document.getElementById('page-title').innerText = titleText;
+    
+    if(v === 'dash') loadDashboardData(); if(v === 'feed') loadFeedbackData(); if(v === 'tick') loadTickets(); if(v === 'onboard') loadOnboardTable(); if(v === 'enroll') loadEnrollData(); if(v === 'nsdc') loadNsdcData(); if(v === 'tasks') loadTasks(); if(v === 'report') loadReportsData();
   }
 
-  /* --- DATA LOADERS (API CALLS) --- */
   async function loadDashboardData() {
     setSyncing(true);
     let p = { session: document.getElementById("dash-session").value, rating: document.getElementById("dash-rating").value, start: document.getElementById("dash-start").value, end: document.getElementById("dash-end").value };
@@ -250,10 +273,26 @@
   
   async function updateTask(r, s) { setSyncing(true); await apiPost('updateTaskStatusRow', {row: r, status: s}); loadTasks(); }
 
+  // REPORTS LOADER
+  async function loadReportsData() {
+    setSyncing(true);
+    let p = { groupBy: document.getElementById("rep-group").value, start: document.getElementById("rep-start").value, end: document.getElementById("rep-end").value };
+    let res = await apiGet('getReportsData', p);
+    if(res && !res.error) {
+      document.getElementById("rep-nps-body").innerHTML = res.npsReport.length ? res.npsReport.map(r => `<tr><td><strong>${r.key}</strong></td><td>${r.total}</td><td><span class="badge" style="background:${r.nps >= 50 ? '#2ecc71' : (r.nps > 0 ? '#f39c12' : '#e74c3c')}">${r.nps}</span></td></tr>`).join('') : `<tr><td colspan="3">No Data Found</td></tr>`;
+      document.getElementById("rep-trainer-body").innerHTML = res.trainerReport.length ? res.trainerReport.map(r => `<tr><td><strong>${r.key}</strong></td><td>${r.total}</td><td><span class="badge" style="background:${r.nps >= 50 ? '#2ecc71' : (r.nps > 0 ? '#f39c12' : '#e74c3c')}">${r.nps}</span></td></tr>`).join('') : `<tr><td colspan="3">No Data Found / Trainer Column Missing</td></tr>`;
+      document.getElementById("rep-ops-body").innerHTML = res.opsReport.length ? res.opsReport.map(r => `<tr><td><strong>${r.key}</strong></td><td>${r.tasks || 0}</td><td>${r.onboard || 0}</td><td>${r.nsdc || 0}</td></tr>`).join('') : `<tr><td colspan="4">No Data Found</td></tr>`;
+    }
+    setSyncing(false);
+  }
+
   window.onload = async () => { 
     const now = new Date(); const y = now.getFullYear(); const m = String(now.getMonth() + 1).padStart(2, '0');
-    document.getElementById("dash-start").value = `${y}-${m}-01`; document.getElementById("dash-end").value = `${y}-${m}-${new Date(y, now.getMonth() + 1, 0).getDate()}`;
-    document.getElementById("feed-start").value = `${y}-${m}-01`; document.getElementById("dash-end-feed").value = `${y}-${m}-${new Date(y, now.getMonth() + 1, 0).getDate()}`;
+    const startStr = `${y}-${m}-01`; const endStr = `${y}-${m}-${new Date(y, now.getMonth() + 1, 0).getDate()}`;
+    
+    document.getElementById("dash-start").value = startStr; document.getElementById("dash-end").value = endStr;
+    document.getElementById("feed-start").value = startStr; document.getElementById("dash-end-feed").value = endStr;
+    document.getElementById("rep-start").value = startStr; document.getElementById("rep-end").value = endStr;
     
     let list = await apiGet('getSessions');
     if(list && !list.error) document.querySelectorAll(".session-sel").forEach(sel => list.forEach(n => { let o=document.createElement("option"); o.value=n; o.text=n; sel.add(o); }));
