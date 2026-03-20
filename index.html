@@ -6,22 +6,45 @@
     <title>CSAT & Onboarding Dashboard</title>
     <style>
         body, html {
-            margin: 0;
-            padding: 0;
-            height: 100%;
-            overflow: hidden; /* Scrollbar chupane ke liye */
-            background-color: #f4f6fb;
+            margin: 0; padding: 0; height: 100%;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #1f2235; /* Dark background for mobile page */
+            color: white; text-align: center;
         }
+        /* iFrame styling for Desktop */
         iframe {
-            width: 100vw;
-            height: 100vh;
-            border: none; /* Border hatane ke liye */
+            width: 100vw; height: 100vh; border: none; display: block;
+        }
+        /* Mobile Fallback Container */
+        .mobile-fallback {
+            display: none; padding: 40px 20px; padding-top: 25vh;
+        }
+        .mobile-fallback h2 { color: #ff7b2c; font-size: 28px; margin-bottom: 10px;}
+        .mobile-fallback p { color: #aaa; font-size: 14px; margin-bottom: 30px; line-height: 1.5; }
+        .btn {
+            display: inline-block; background: #ff7b2c; color: white;
+            padding: 15px 35px; text-decoration: none; border-radius: 8px;
+            font-weight: 800; font-size: 16px; box-shadow: 0 4px 15px rgba(255,123,44,0.4);
+            transition: 0.3s;
+        }
+        .btn:active { transform: scale(0.95); }
+
+        /* Magic Trick: Mobile screen aate hi iFrame hatao, VIP Button dikhao */
+        @media (max-width: 768px) {
+            iframe { display: none !important; }
+            .mobile-fallback { display: block !important; }
         }
     </style>
 </head>
 <body>
 
-    <iframe src="https://script.google.com/macros/s/AKfycbxi9OJDMRXva7lZH_VZA17bHUAfNFE8GuB9kYYMRqZ68gVBzWTa42L3vgzxEup-uFOh/exec"></iframe>
+    <iframe src="YAHAN_APNA_LAAAMBA_WALA_EXEC_LINK_PASTE_KARO"></iframe>
+
+    <div class="mobile-fallback">
+        <h2>📱 Mobile Dashboard</h2>
+        <p>Due to mobile browser security, the dashboard needs to be opened in a secure direct tab. Click below to continue.</p>
+        <a href="https://script.google.com/macros/s/AKfycbxi9OJDMRXva7lZH_VZA17bHUAfNFE8GuB9kYYMRqZ68gVBzWTa42L3vgzxEup-uFOh/exec" class="btn">Open Dashboard 🚀</a>
+    </div>
 
 </body>
 </html>
