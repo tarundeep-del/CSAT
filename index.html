@@ -282,9 +282,15 @@
   async function updateTask(r, s) { setSyncing(true); await apiPost('updateTaskStatusRow', {row: r, status: s}); loadTasks(); }
 
   // REPORTS LOADER
+ // REPORTS LOADER
   async function loadReportsData() {
     setSyncing(true);
-    let p = { groupBy: document.getElementById("rep-group").value, start: document.getElementById("rep-start").value, end: document.getElementById("rep-end").value };
+    let p = { 
+      session: document.getElementById("rep-session").value, // 🚀 NAYA: Session Filter added
+      groupBy: document.getElementById("rep-group").value, 
+      start: document.getElementById("rep-start").value, 
+      end: document.getElementById("rep-end").value 
+    };
     let res = await apiGet('getReportsData', p);
     if(res && !res.error) {
       document.getElementById("rep-nps-body").innerHTML = res.npsReport.length ? res.npsReport.map(r => `<tr><td><strong>${r.key}</strong></td><td>${r.total}</td><td><span class="badge" style="background:${r.nps >= 50 ? '#2ecc71' : (r.nps > 0 ? '#f39c12' : '#e74c3c')}">${r.nps}</span></td></tr>`).join('') : `<tr><td colspan="3">No Data Found</td></tr>`;
