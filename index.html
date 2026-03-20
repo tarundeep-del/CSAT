@@ -145,22 +145,30 @@
   Chart.register(ChartDataLabels); let gChart, dChart, oChart; 
   const theme = { orange: '#ff7b2c', navy: '#1f2235', blue: '#3498db', light: '#f0f2f5', purple: '#9b59b6' };
 
-  // ⚠️⚠️ YAHAN APNA WEB APP URL PASTE KARO ⚠️⚠️
+  // ⚠️ AAPKA NAYA WALA API LINK
   const API_URL = "https://script.google.com/macros/s/AKfycbzZvoyP-WOdDdUFmktk3XS79mIOkq7sWjAcBBXWthAQBwHmMBJRP33PUE_qkusfqxWb/exec"; 
 
+  // 🚀 MAGIC TRICK ADDED: credentials: "omit"
   async function apiGet(action, params = {}) {
     try {
       let url = new URL(API_URL);
       url.searchParams.append('action', action);
       for (const k in params) url.searchParams.append(k, params[k]);
-      let res = await fetch(url, { redirect: "follow" });
+      let res = await fetch(url, { method: 'GET', redirect: "follow", credentials: "omit" });
       return await res.json();
     } catch (e) { console.error("API GET Error:", e); return { error: e }; }
   }
 
+  // 🚀 MAGIC TRICK ADDED: credentials: "omit"
   async function apiPost(action, dataObj = {}) {
     try {
-      let res = await fetch(API_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: action, data: dataObj }), redirect: "follow" });
+      let res = await fetch(API_URL, { 
+        method: 'POST', 
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' }, 
+        body: JSON.stringify({ action: action, data: dataObj }), 
+        redirect: "follow",
+        credentials: "omit"
+      });
       return await res.json();
     } catch (e) { console.error("API POST Error:", e); return { error: e }; }
   }
