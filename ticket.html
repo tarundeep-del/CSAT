@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Raise a Support Ticket</title>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  
+  <style>
+    :root { 
+      --primary: #ff7b2c; 
+      --secondary: #1f2235; 
+      --bg: #f4f6fb; 
+    }
+    
+    body { 
+      margin: 0; 
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+      background: var(--bg); 
+      color: #333; 
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 20px;
+      box-sizing: border-box;
+    }
+
+    .form-container {
+      background: white;
+      padding: 40px;
+      border-radius: 15px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+      width: 100%;
+      max-width: 500px;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    .header h2 {
+      margin: 0;
+      color: var(--secondary);
+      font-size: 24px;
+      font-weight: 800;
+    }
+
+    .header p {
+      color: #888;
+      font-size: 14px;
+      margin-top: 5px;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--secondary);
+    }
+
+    .form-group input, 
+    .form-group select, 
+    .form-group textarea {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      font-size: 14px;
+      outline: none;
+      box-sizing: border-box;
+      transition: border-color 0.3s;
+      font-family: inherit;
+    }
+
+    .form-group input:focus, 
+    .form-group select:focus, 
+    .form-group textarea:focus {
+      border-color: var(--primary);
+    }
+
+    .form-group textarea {
+      resize: vertical;
+      min-height: 80px;
+    }
+
+    .btn-submit {
+      width: 100%;
+      background: var(--primary);
+      color: white;
+      border: none;
+      padding: 15px;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 800;
+      cursor: pointer;
+      transition: 0.3s;
+      box-shadow: 0 4px 15px rgba(255,123,44,0.3);
+    }
+
+    .btn-submit:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(255,123,44,0.4);
+    }
+
+    .btn-submit:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="form-container">
+    <div class="header">
+      <h2>Raise a Support Ticket 🎫</h2>
+      <p>Fill out the form below and our team will get back to you.</p>
+    </div>
+
+    <form id="ticketForm" onsubmit="submitForm(event)">
+      <div class="form-group">
+        <label>Full Name *</label>
+        <input type="text" id="name" required placeholder="Enter your full name">
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+        <div class="form-group">
+          <label>Phone Number *</label>
+          <input type="tel" id="phone" required placeholder="Mobile No.">
+        </div>
+        <div class="form-group">
+          <label>Email Address</label>
+          <input type="email" id="email" placeholder="Email (Optional)">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Course Name</label>
+        <select id="course">
+          <option value="N/A" selected>Select Course...</option>
+          <option value="Fashion Designing">Fashion Designing</option>
+          <option value="Cosmetology">Cosmetology</option>
+          <option value="Mastery Program">Mastery Program</option>
+          <option value="Basic Program">Basic Program</option>
+          <option value="Activation Program">Activation Program</option>
+          <option value="NID Program">NID Program</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Issue Type *</label>
+        <select id="issue" required>
+          <option value="" disabled selected>What do you need help with?</option>
+          <option value="NSDC">NSDC</option>
+          <option value="KIT">KIT</option>
+          <option value="Finance">Finance</option>
+          <option value="Training">Training</option>
+          <option value="Onboarding">Onboarding</option>
+          <option value="Cancellation">Cancellation</option>
+          <option value="Exam">Exam</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Description / Remark</label>
+        <textarea id="remark" placeholder="Please describe your issue in detail..."></textarea>
+      </div>
+
+      <button type="submit" class="btn-submit" id="submitBtn">Submit Ticket</button>
+    </form>
+  </div>
+
+  <script>
+    // ⚠️⚠️ YAHAN APNA SAME WEB APP URL PASTE KARO JO DASHBOARD MEIN KIYA THA ⚠️⚠️
+    const API_URL = "https://script.google.com/macros/s/AKfycbzZvoyP-WOdDdUFmktk3XS79mIOkq7sWjAcBBXWthAQBwHmMBJRP33PUE_qkusfqxWb/exec"; 
+
+    async function apiPost(action, dataObj = {}) {
+      try {
+        let res = await fetch(API_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // Bypasses CORS preflight
+          body: JSON.stringify({ action: action, data: dataObj }),
+          redirect: "follow"
+        });
+        return await res.json();
+      } catch (e) {
+        console.error("API Error:", e);
+        return { error: e };
+      }
+    }
+
+    async function submitForm(event) {
+      event.preventDefault(); // Prevents page reload
+      
+      const btn = document.getElementById('submitBtn');
+      btn.disabled = true;
+      btn.innerText = "Submitting...";
+
+      // Gather Data
+      const ticketData = {
+        name: document.getElementById('name').value,
+        phone: document.getElementById('phone').value,
+        email: document.getElementById('email').value || "-",
+        course: document.getElementById('course').value,
+        issue: document.getElementById('issue').value,
+        remark: document.getElementById('remark').value || "-",
+        source: "Web Form", // Hardcoded source
+        priority: "Medium", // Default priority for student forms
+        assigned: "Unassigned" // Default
+      };
+
+      // Show Loading Alert
+      Swal.fire({
+        title: 'Please wait...',
+        text: 'Creating your support ticket',
+        allowOutsideClick: false,
+        didOpen: () => {
+          Swal.showLoading();
+        }
+      });
+
+      // API Call
+      const response = await apiPost('saveTicket', ticketData);
+
+      // Handle Response
+      if (response && !response.error) {
+        Swal.fire({
+          icon: 'success',
+          title: 'Ticket Created!',
+          text: 'Our team will contact you shortly.',
+          confirmButtonColor: '#ff7b2c'
+        });
+        document.getElementById('ticketForm').reset(); // Clear form
+      } else {
+        Swal.fire({
+          icon: 'error',
+          title: 'Oops!',
+          text: 'Something went wrong. Please try again.',
+          confirmButtonColor: '#ff7b2c'
+        });
+      }
+
+      btn.disabled = false;
+      btn.innerText = "Submit Ticket";
+    }
+  </script>
+</body>
+</html>
