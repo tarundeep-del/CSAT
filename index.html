@@ -116,7 +116,8 @@
     </div>
 
     <div id="view-report" class="hidden">
-      <div class="filters" style="grid-template-columns: 1fr 1fr 1fr auto;">
+      <div class="filters" style="grid-template-columns: 1.5fr 1fr 1fr 1fr auto;">
+        <div class="filter-group">Session <select id="rep-session" class="session-sel"><option value="All">All Sessions</option></select></div>
         <div class="filter-group">Format <select id="rep-group"><option value="monthly">Month Wise</option><option value="daily">Date Wise</option></select></div>
         <div class="filter-group">Start <input type="date" id="rep-start"></div>
         <div class="filter-group">End <input type="date" id="rep-end"></div>
@@ -145,10 +146,8 @@
   Chart.register(ChartDataLabels); let gChart, dChart, oChart; 
   const theme = { orange: '#ff7b2c', navy: '#1f2235', blue: '#3498db', light: '#f0f2f5', purple: '#9b59b6' };
 
-  // ⚠️ YOUR UPDATED API LINK
   const API_URL = "https://script.google.com/macros/s/AKfycbzZvoyP-WOdDdUFmktk3XS79mIOkq7sWjAcBBXWthAQBwHmMBJRP33PUE_qkusfqxWb/exec"; 
 
-  // 🚀 MAGIC TRICK ADDED: credentials: "omit"
   async function apiGet(action, params = {}) {
     try {
       let url = new URL(API_URL);
@@ -159,7 +158,6 @@
     } catch (e) { console.error("API GET Error:", e); return { error: e }; }
   }
 
-  // 🚀 MAGIC TRICK ADDED: credentials: "omit"
   async function apiPost(action, dataObj = {}) {
     try {
       let res = await fetch(API_URL, { 
@@ -282,11 +280,10 @@
   async function updateTask(r, s) { setSyncing(true); await apiPost('updateTaskStatusRow', {row: r, status: s}); loadTasks(); }
 
   // REPORTS LOADER
- // REPORTS LOADER
   async function loadReportsData() {
     setSyncing(true);
     let p = { 
-      session: document.getElementById("rep-session").value, // 🚀 NAYA: Session Filter added
+      session: document.getElementById("rep-session").value, 
       groupBy: document.getElementById("rep-group").value, 
       start: document.getElementById("rep-start").value, 
       end: document.getElementById("rep-end").value 
