@@ -3,56 +3,39 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CSAT & Onboarding Dashboard</title>
+    <title>CSAT Dashboard</title>
+    <meta http-equiv="refresh" content="0; url=https://script.google.com/macros/s/AKfycbxi9OJDMRXva7lZH_VZA17bHUAfNFE8GuB9kYYMRqZ68gVBzWTa42L3vgzxEup-uFOh/exec">
     <style>
-        body, html {
-            margin: 0; padding: 0; height: 100%;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        body {
             background-color: #1f2235;
-            color: white; text-align: center;
+            color: #ff7b2c;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            text-align: center;
+            padding-top: 30vh;
+            margin: 0;
         }
-        iframe {
-            width: 100vw; height: 100vh; border: none; display: block;
+        .loader {
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #ff7b2c;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px auto;
         }
-        .mobile-fallback {
-            padding: 40px 20px; padding-top: 25vh;
-        }
-        .mobile-fallback h2 { color: #ff7b2c; font-size: 28px; margin-bottom: 10px;}
-        .mobile-fallback p { color: #aaa; font-size: 14px; margin-bottom: 30px; line-height: 1.5; }
-        .btn {
-            display: inline-block; background: #ff7b2c; color: white;
-            padding: 15px 35px; text-decoration: none; border-radius: 8px;
-            font-weight: 800; font-size: 16px; box-shadow: 0 4px 15px rgba(255,123,44,0.4);
-            transition: 0.3s;
-        }
-        .btn:active { transform: scale(0.95); }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
 
-    <div id="app-container"></div>
+    <div class="loader"></div>
+    <h2>🚀 Loading Dashboard...</h2>
+    <p style="color: #888;">Please wait, redirecting to secure server...</p>
 
     <script>
-        // Aapka Asli Google Web App Link
-        const appUrl = "https://script.google.com/macros/s/AKfycbxi9OJDMRXva7lZH_VZA17bHUAfNFE8GuB9kYYMRqZ68gVBzWTa42L3vgzxEup-uFOh/exec";
-        const container = document.getElementById('app-container');
-
-        // Check if device is Mobile or Tablet
-        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth <= 768;
-
-        if (isMobile) {
-            // Agar Mobile hai, toh iFrame load hi mat karo. Sirf Button dikhao!
-            container.innerHTML = `
-                <div class="mobile-fallback">
-                    <h2>📱 Mobile Dashboard</h2>
-                    <p>Due to mobile browser security, the dashboard needs to be opened in a secure direct tab. Click below to continue.</p>
-                    <a href="${appUrl}" class="btn">Open Dashboard 🚀</a>
-                </div>
-            `;
-        } else {
-            // Agar Desktop hai, toh iFrame load karo
-            container.innerHTML = `<iframe src="${appUrl}"></iframe>`;
-        }
+        setTimeout(function() {
+            window.location.replace("https://script.google.com/macros/s/AKfycbxi9OJDMRXva7lZH_VZA17bHUAfNFE8GuB9kYYMRqZ68gVBzWTa42L3vgzxEup-uFOh/exec");
+        }, 500);
     </script>
 
 </body>
