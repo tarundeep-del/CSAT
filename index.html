@@ -65,7 +65,7 @@
       <li id="m-enroll" onclick="switchView('enroll')">Onboarding Data</li> 
       <li id="m-nsdc" onclick="switchView('nsdc')">NSDC / Certificate</li> 
       <li id="m-tasks" onclick="switchView('tasks')">Daily Tasks</li>
-      <li id="m-report" onclick="switchView('report')">📊 Analytics Reports</li>
+      <li id="m-report" onclick="switchView('report')">Analytics Reports</li>
     </ul>
   </div>
 
@@ -102,7 +102,12 @@
 
     <div id="view-enroll" class="hidden">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; background: white; padding: 15px 25px; border-radius: 15px;"><h3 style="margin: 0; color: var(--secondary);">Internal Enrollments</h3><button class="btn-apply" onclick="openEnrollModal()">➕ Add Data</button></div>
-      <div class="table-wrapper" style="margin-top: 0;"><table><thead><tr><th>Date Added</th><th>Course</th><th>Month</th><th>Count</th><th>Onboarded By</th></tr></thead><tbody id="enroll-body"></tbody></table></div>
+      <div class="table-wrapper" style="margin-top: 0;">
+        <table>
+          <thead><tr><th>Date Added</th><th>Course</th><th>Count</th><th>Onboarded By</th></tr></thead>
+          <tbody id="enroll-body"></tbody>
+        </table>
+      </div>
     </div>
 
     <div id="view-nsdc" class="hidden">
@@ -259,7 +264,7 @@
 
   async function loadOnboardTable() { setSyncing(true); let list = await apiGet('getOnboardingTable'); if(list && !list.error) document.getElementById("onboard-body").innerHTML = list.map(r => `<tr><td><strong>${r.name}</strong></td><td>${r.phone}</td><td>${r.email}</td><td><span class="badge" style="background:var(--blue)">${r.program}</span></td><td>${r.source}</td></tr>`).join(''); setSyncing(false); }
   
-  // 🚀 PREMIUM ENROLLMENT MODAL (Fixed Month Format)
+  // 🚀 PREMIUM ENROLLMENT MODAL (Course is Dropdown & Month is removed from output)
   async function openEnrollModal() {
     const { value: v } = await Swal.fire({ 
       title: 'New Enrollment', 
@@ -267,7 +272,13 @@
         <div style="text-align: left; margin-top: 15px;">
           <div style="margin-bottom: 15px;">
             <label style="font-size: 13px; font-weight: 600; color: var(--secondary);">Course Name *</label>
-            <input id="en-c" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px; box-sizing:border-box; margin-top: 5px;" placeholder="Enter Course Name">
+            <select id="en-c" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px; box-sizing:border-box; margin-top: 5px;">
+              <option value="" disabled selected>Select Course...</option>
+              <option value="Activation">Activation</option>
+              <option value="Fashion Designing">Fashion Designing</option>
+              <option value="Cosmetology">Cosmetology</option>
+              <option value="Others">Others</option>
+            </select>
           </div>
           <div style="margin-bottom: 15px;">
             <label style="font-size: 13px; font-weight: 600; color: var(--secondary);">Enrollment Count *</label>
@@ -294,7 +305,6 @@
         const by = document.getElementById('en-by').value;
         if(!c || !cnt) { Swal.showValidationMessage('Please fill all fields'); return false; }
         
-        // Month formatting to Mar-2026
         const d = new Date();
         const cleanMonth = d.toLocaleString('default', { month: 'short' }) + "-" + d.getFullYear(); 
         
@@ -304,7 +314,15 @@
     if (v) { setSyncing(true); await apiPost('saveEnrollmentData', v); loadEnrollData(); Swal.fire({icon: 'success', title: 'Saved!', showConfirmButton: false, timer: 1500}); }
   }
   
-  async function loadEnrollData() { setSyncing(true); let list = await apiGet('getEnrollmentData'); if(list && !list.error) document.getElementById('enroll-body').innerHTML = list.map(r => `<tr><td>${r.date}</td><td><strong>${r.course}</strong></td><td>${r.month}</td><td><span class="badge" style="background:var(--blue);">${r.count}</span></td><td>${r.by}</td></tr>`).join(''); setSyncing(false); }
+  async function loadEnrollData() { 
+    setSyncing(true); 
+    let list = await apiGet('getEnrollmentData'); 
+    if(list && !list.error) {
+      // 🚀 NAYA: Output table se 'Month' column hata diya gaya hai (${r.month} removed)
+      document.getElementById('enroll-body').innerHTML = list.map(r => `<tr><td>${r.date}</td><td><strong>${r.course}</strong></td><td><span class="badge" style="background:var(--blue);">${r.count}</span></td><td>${r.by}</td></tr>`).join(''); 
+    }
+    setSyncing(false); 
+  }
 
   // 🚀 PREMIUM NSDC MODAL
   async function openNsdcModal(type) {
