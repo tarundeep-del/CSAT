@@ -259,16 +259,81 @@
 
   async function loadOnboardTable() { setSyncing(true); let list = await apiGet('getOnboardingTable'); if(list && !list.error) document.getElementById("onboard-body").innerHTML = list.map(r => `<tr><td><strong>${r.name}</strong></td><td>${r.phone}</td><td>${r.email}</td><td><span class="badge" style="background:var(--blue)">${r.program}</span></td><td>${r.source}</td></tr>`).join(''); setSyncing(false); }
   
+  // 🚀 PREMIUM ENROLLMENT MODAL (Fixed Month Format)
   async function openEnrollModal() {
-    const { value: v } = await Swal.fire({ title: 'New Enrollment', html: `<input id="en-c" placeholder="Course"> <input type="number" id="en-count" placeholder="Count">`, preConfirm: () => { return { course: document.getElementById('en-c').value, month: new Date().toISOString(), count: document.getElementById('en-count').value, by: "Web" }; } });
-    if (v) { setSyncing(true); await apiPost('saveEnrollmentData', v); loadEnrollData(); Swal.fire({icon: 'success', showConfirmButton: false, timer: 1500}); }
+    const { value: v } = await Swal.fire({ 
+      title: 'New Enrollment', 
+      html: `
+        <div style="text-align: left; margin-top: 15px;">
+          <div style="margin-bottom: 15px;">
+            <label style="font-size: 13px; font-weight: 600; color: var(--secondary);">Course Name *</label>
+            <input id="en-c" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px; box-sizing:border-box; margin-top: 5px;" placeholder="Enter Course Name">
+          </div>
+          <div style="margin-bottom: 15px;">
+            <label style="font-size: 13px; font-weight: 600; color: var(--secondary);">Enrollment Count *</label>
+            <input type="number" id="en-count" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px; box-sizing:border-box; margin-top: 5px;" placeholder="Number of enrollments">
+          </div>
+          <div style="margin-bottom: 5px;">
+            <label style="font-size: 13px; font-weight: 600; color: var(--secondary);">Onboarded By *</label>
+            <select id="en-by" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px; box-sizing:border-box; margin-top: 5px;">
+              <option value="Kumud">Kumud</option>
+              <option value="Sanskriti">Sanskriti</option>
+              <option value="Dhananjaya">Dhananjaya</option>
+              <option value="Web">Web (Form)</option>
+            </select>
+          </div>
+        </div>
+      `, 
+      showCancelButton: true,
+      confirmButtonColor: '#ff7b2c',
+      cancelButtonColor: '#aaa',
+      confirmButtonText: 'Save Data',
+      preConfirm: () => { 
+        const c = document.getElementById('en-c').value;
+        const cnt = document.getElementById('en-count').value;
+        const by = document.getElementById('en-by').value;
+        if(!c || !cnt) { Swal.showValidationMessage('Please fill all fields'); return false; }
+        
+        // Month formatting to Mar-2026
+        const d = new Date();
+        const cleanMonth = d.toLocaleString('default', { month: 'short' }) + "-" + d.getFullYear(); 
+        
+        return { course: c, month: cleanMonth, count: cnt, by: by }; 
+      } 
+    });
+    if (v) { setSyncing(true); await apiPost('saveEnrollmentData', v); loadEnrollData(); Swal.fire({icon: 'success', title: 'Saved!', showConfirmButton: false, timer: 1500}); }
   }
   
   async function loadEnrollData() { setSyncing(true); let list = await apiGet('getEnrollmentData'); if(list && !list.error) document.getElementById('enroll-body').innerHTML = list.map(r => `<tr><td>${r.date}</td><td><strong>${r.course}</strong></td><td>${r.month}</td><td><span class="badge" style="background:var(--blue);">${r.count}</span></td><td>${r.by}</td></tr>`).join(''); setSyncing(false); }
 
+  // 🚀 PREMIUM NSDC MODAL
   async function openNsdcModal(type) {
-    const { value: v } = await Swal.fire({ title: type, html: `<input id="n-b" placeholder="Batch"><input type="number" id="n-c" placeholder="Count">`, preConfirm: () => { return { type: type, batch: document.getElementById('n-b').value, count: document.getElementById('n-c').value }; } });
-    if(v) { setSyncing(true); await apiPost('saveNsdcData', v); loadNsdcData(); }
+    const { value: v } = await Swal.fire({ 
+      title: type, 
+      html: `
+        <div style="text-align: left; margin-top: 15px;">
+          <div style="margin-bottom: 15px;">
+            <label style="font-size: 13px; font-weight: 600; color: var(--secondary);">Batch Number *</label>
+            <input id="n-b" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px; box-sizing:border-box; margin-top: 5px;" placeholder="Enter Batch No.">
+          </div>
+          <div>
+            <label style="font-size: 13px; font-weight: 600; color: var(--secondary);">Count *</label>
+            <input type="number" id="n-c" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px; box-sizing:border-box; margin-top: 5px;" placeholder="Enter Count">
+          </div>
+        </div>
+      `,
+      showCancelButton: true,
+      confirmButtonColor: type === 'Enrollment' ? '#3498db' : '#2ecc71',
+      cancelButtonColor: '#aaa',
+      confirmButtonText: 'Save Data',
+      preConfirm: () => { 
+        const b = document.getElementById('n-b').value;
+        const c = document.getElementById('n-c').value;
+        if(!b || !c) { Swal.showValidationMessage('Please fill all fields'); return false; }
+        return { type: type, batch: b, count: c }; 
+      } 
+    });
+    if(v) { setSyncing(true); await apiPost('saveNsdcData', v); loadNsdcData(); Swal.fire({icon: 'success', title: 'Saved!', showConfirmButton: false, timer: 1500}); }
   }
 
   async function loadNsdcData() { setSyncing(true); let list = await apiGet('getNsdcData'); if(list && !list.error) document.getElementById('nsdc-body').innerHTML = list.map(r => `<tr><td>${r.date}</td><td><strong>${r.type}</strong></td><td>${r.batch}</td><td><span class="badge" style="background:var(--blue);">${r.count}</span></td></tr>`).join(''); setSyncing(false); }
