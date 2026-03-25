@@ -253,7 +253,7 @@
   }
 
   // 🚀 NAYE OPTIONS ADDED HERE
-  async function openTicketModal() {
+ async function openTicketModal() {
     const { value: v } = await Swal.fire({ 
       title: 'Raise Ticket', 
       html: `
@@ -269,9 +269,14 @@
           </div>
           <div><label style="font-size: 13px; font-weight: 600;">Issue *</label>
             <select id="s-i" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px; box-sizing:border-box;">
-              <option value="" disabled selected>Issue...</option>
+              <option value="" disabled selected>What do you need help with?</option>
               <option value="NSDC">NSDC</option>
+              <option value="KIT">KIT</option>
               <option value="Finance">Finance</option>
+              <option value="Training">Training</option>
+              <option value="Onboarding">Onboarding</option>
+              <option value="Cancellation">Cancellation</option>
+              <option value="Exam">Exam</option>
               <option value="Certificate">Certificate</option>
               <option value="Portfolio">Portfolio</option>
               <option value="Extension">Extension</option>
