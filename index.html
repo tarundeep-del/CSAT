@@ -1,429 +1,1639 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CSAT Dashboard (Enterprise)</title>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
-  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-  
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CSAT Dashboard (Optimized)</title>
+
+  <script defer src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
   <style>
-    :root { --primary: #ff7b2c; --secondary: #1f2235; --accent: #3d4466; --bg: #f4f6fb; --blue: #3498db; --success: #2ecc71; --danger: #e74c3c; --warning: #f39c12; --purple: #9b59b6; }
-    body { margin: 0; font-family: 'Segoe UI', Tahoma, sans-serif; background: var(--bg); color: #333; overflow-x: hidden; }
-    .layout { display: flex; min-height: 100vh; }
-    .sidebar { width: 220px; background: var(--secondary); color: white; padding: 20px; position: fixed; height: 100vh; z-index: 1000; overflow-y: auto; }
-    .sidebar h2 { color: var(--primary); margin-bottom: 30px; font-size: 1.4rem; font-weight: 800; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 15px; }
-    .sidebar ul { list-style: none; padding: 0; margin: 0; }
-    .sidebar li { padding: 12px 15px; cursor: pointer; opacity: 0.8; border-radius: 8px; margin-bottom: 10px; transition: 0.2s; font-weight: 500; }
-    .sidebar li.active { background: var(--primary); color: white; opacity: 1; box-shadow: 0 4px 10px rgba(255,123,44,0.3); }
-    .sidebar li:hover:not(.active) { background: rgba(255,255,255,0.1); opacity: 1; }
-    .main { flex: 1; margin-left: 240px; padding: 30px; width: calc(100% - 240px); }
-    .filters { background: white; padding: 20px; border-radius: 15px; margin-bottom: 25px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); display: grid; grid-template-columns: 2fr 1fr 1.2fr 1.2fr auto; gap: 15px; align-items: flex-end; }
-    .filter-group { display: flex; flex-direction: column; gap: 6px; font-size: 12px; font-weight: 700; color: var(--secondary); }
-    select, input { padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; outline: none; width: 100%; box-sizing: border-box; height: 40px; }
-    .btn-apply { background: var(--primary); color: white; border: none; padding: 0 20px; border-radius: 8px; cursor: pointer; font-weight: 700; height: 40px; white-space: nowrap; }
-    .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 20px; margin-bottom: 30px; }
-    .card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); text-align: center; transition: 0.3s; }
-    .card h3 { margin: 0; font-size: 11px; color: #888; text-transform: uppercase; letter-spacing: 1px; }
-    .card h2 { margin: 10px 0 0; font-size: 28px; color: var(--secondary); font-weight: 800; }
-    .card.total-feedback { border-top: 6px solid var(--accent); } .card.untouched { border-top: 6px solid var(--danger); } .card.solved { border-top: 6px solid var(--success); } .card.onboarding-card { border-top: 6px solid var(--blue); } .card.enrolled-card { border-top: 6px solid var(--purple); }
-    .chart-container { display: grid; grid-template-columns: 1fr 1fr; gap: 25px; }
-    .content-section, .form-section { background: white; padding: 15px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); display: flex; flex-direction: column; justify-content: center; position: relative; }
-    .full-width-chart { grid-column: 1 / -1; height: 260px; margin-top: 5px; } canvas { max-width: 100% !important; max-height: 100% !important; }
-    .table-wrapper { overflow-x: auto; margin-top: 15px; background: white; border-radius: 15px; padding: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); } table { width: 100%; border-collapse: collapse; min-width: 800px; } th { text-align: left; background: #f8f9fa; padding: 15px; border-bottom: 2px solid #eee; color: var(--secondary); font-size: 13px; } td { padding: 15px; border-bottom: 1px solid #eee; font-size: 14px; vertical-align: middle; } td:first-child { white-space: nowrap; } 
-    .badge { padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 700; color: white; white-space: nowrap; display: inline-block; text-align: center; }
-    .hidden { display: none; }
-    @keyframes pulse-bg { 0% { background-color: #ffffff; } 50% { background-color: #f0f2f5; } 100% { background-color: #ffffff; } } .syncing { animation: pulse-bg 1.2s infinite ease-in-out; pointer-events: none; opacity: 0.7; }
-    .toggle-btn { background: none; border: none; cursor: pointer; font-size: 12px; color: var(--secondary); transition: transform 0.3s; padding: 5px; }
-    .detail-row-content { display: grid; grid-template-columns: 1fr 1fr auto; gap: 20px; padding: 20px; background: #fafbfc; border-left: 4px solid var(--primary); box-shadow: inset 0 3px 6px rgba(0,0,0,0.02); margin: 0; }
-    .main-row:hover { background: #f8f9fa; }
-    @media (max-width: 1024px) { .chart-container { grid-template-columns: 1fr; } .content-section { height: 220px; } }
-    @media (max-width: 768px) { .sidebar { width: 0; padding: 0; overflow: hidden; display:none; } .main { margin-left: 0; width: 100%; padding: 15px;} .filters { grid-template-columns: 1fr; } .detail-row-content { grid-template-columns: 1fr; } }
-    .mobile-menu { display: none; background: var(--secondary); color: white; padding: 15px; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 999; }
-    .mobile-menu select { width: 60%; background: white; color: black; border:none; padding: 8px;}
-    @media (max-width: 768px) { .mobile-menu { display: flex; } }
+    :root {
+      --primary: #ff7b2c;
+      --secondary: #1f2235;
+      --accent: #3d4466;
+      --bg: #f4f6fb;
+      --blue: #3498db;
+      --success: #2ecc71;
+      --danger: #e74c3c;
+      --warning: #f39c12;
+      --purple: #9b59b6;
+      --panel: #ffffff;
+      --muted: #888888;
+      --shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+      --radius: 15px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Tahoma, sans-serif;
+      background: var(--bg);
+      color: #333;
+      overflow-x: hidden;
+    }
+
+    .layout {
+      display: flex;
+      min-height: 100vh;
+    }
+
+    .sidebar {
+      width: 220px;
+      background: var(--secondary);
+      color: #fff;
+      padding: 20px;
+      position: fixed;
+      height: 100vh;
+      z-index: 1000;
+      overflow-y: auto;
+    }
+
+    .sidebar h2 {
+      color: var(--primary);
+      margin: 0 0 30px;
+      font-size: 1.4rem;
+      font-weight: 800;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      padding-bottom: 15px;
+    }
+
+    .sidebar ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    .sidebar li {
+      padding: 12px 15px;
+      cursor: pointer;
+      opacity: 0.8;
+      border-radius: 8px;
+      margin-bottom: 10px;
+      transition: 0.2s;
+      font-weight: 500;
+    }
+
+    .sidebar li.active {
+      background: var(--primary);
+      opacity: 1;
+      box-shadow: 0 4px 10px rgba(255, 123, 44, 0.3);
+    }
+
+    .sidebar li:hover:not(.active) {
+      background: rgba(255, 255, 255, 0.1);
+      opacity: 1;
+    }
+
+    .main {
+      flex: 1;
+      margin-left: 240px;
+      padding: 30px;
+      width: calc(100% - 240px);
+    }
+
+    .filters,
+    .toolbar,
+    .table-wrapper,
+    .content-section,
+    .form-section,
+    .card {
+      background: var(--panel);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+
+    .filters {
+      padding: 20px;
+      margin-bottom: 25px;
+      display: grid;
+      grid-template-columns: 2fr 1fr 1.2fr 1.2fr auto;
+      gap: 15px;
+      align-items: flex-end;
+    }
+
+    .filter-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--secondary);
+    }
+
+    select,
+    input {
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      font-size: 14px;
+      outline: none;
+      width: 100%;
+      height: 40px;
+    }
+
+    .btn-apply {
+      background: var(--primary);
+      color: #fff;
+      border: none;
+      padding: 0 20px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 700;
+      height: 40px;
+      white-space: nowrap;
+    }
+
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+
+    .card {
+      padding: 20px;
+      text-align: center;
+      transition: 0.3s;
+    }
+
+    .card h3 {
+      margin: 0;
+      font-size: 11px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .card h2 {
+      margin: 10px 0 0;
+      font-size: 28px;
+      color: var(--secondary);
+      font-weight: 800;
+    }
+
+    .card.total-feedback { border-top: 6px solid var(--accent); }
+    .card.untouched { border-top: 6px solid var(--danger); }
+    .card.solved { border-top: 6px solid var(--success); }
+    .card.onboarding-card { border-top: 6px solid var(--blue); }
+    .card.enrolled-card { border-top: 6px solid var(--purple); }
+
+    .chart-container {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 25px;
+    }
+
+    .content-section,
+    .form-section {
+      padding: 15px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      position: relative;
+    }
+
+    .full-width-chart {
+      grid-column: 1 / -1;
+      height: 260px;
+      margin-top: 5px;
+    }
+
+    canvas {
+      max-width: 100% !important;
+      max-height: 100% !important;
+    }
+
+    .table-wrapper {
+      overflow-x: auto;
+      margin-top: 15px;
+      padding: 20px;
+    }
+
+    .toolbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      padding: 15px 25px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 800px;
+    }
+
+    th {
+      text-align: left;
+      background: #f8f9fa;
+      padding: 15px;
+      border-bottom: 2px solid #eee;
+      color: var(--secondary);
+      font-size: 13px;
+    }
+
+    td {
+      padding: 15px;
+      border-bottom: 1px solid #eee;
+      font-size: 14px;
+      vertical-align: middle;
+    }
+
+    td:first-child {
+      white-space: nowrap;
+    }
+
+    .badge {
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 700;
+      color: #fff;
+      white-space: nowrap;
+      display: inline-block;
+      text-align: center;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    @keyframes pulse-bg {
+      0% { background-color: #fff; }
+      50% { background-color: #f0f2f5; }
+      100% { background-color: #fff; }
+    }
+
+    .syncing {
+      animation: pulse-bg 1.2s infinite ease-in-out;
+      pointer-events: none;
+      opacity: 0.7;
+    }
+
+    .toggle-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 12px;
+      color: var(--secondary);
+      transition: transform 0.3s;
+      padding: 5px;
+    }
+
+    .main-row:hover {
+      background: #f8f9fa;
+    }
+
+    .detail-row-content {
+      display: grid;
+      grid-template-columns: 1fr 1fr auto;
+      gap: 20px;
+      padding: 20px;
+      background: #fafbfc;
+      border-left: 4px solid var(--primary);
+      box-shadow: inset 0 3px 6px rgba(0, 0, 0, 0.02);
+      margin: 0;
+    }
+
+    .mobile-menu {
+      display: none;
+      background: var(--secondary);
+      color: #fff;
+      padding: 15px;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 999;
+    }
+
+    .mobile-menu select {
+      width: 60%;
+      background: #fff;
+      color: #000;
+      border: none;
+      padding: 8px;
+    }
+
+    @media (max-width: 1024px) {
+      .chart-container {
+        grid-template-columns: 1fr;
+      }
+
+      .content-section {
+        height: 220px;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .sidebar {
+        width: 0;
+        padding: 0;
+        overflow: hidden;
+        display: none;
+      }
+
+      .main {
+        margin-left: 0;
+        width: 100%;
+        padding: 15px;
+      }
+
+      .filters {
+        grid-template-columns: 1fr;
+      }
+
+      .detail-row-content {
+        grid-template-columns: 1fr;
+      }
+
+      .mobile-menu {
+        display: flex;
+      }
+    }
   </style>
 </head>
 <body>
-
-<div class="mobile-menu">
-  <strong style="color:var(--primary);">CSAT App</strong>
-  <select onchange="switchView(this.value)">
-    <option value="dash">Dashboard</option> <option value="feed">Feedback</option> <option value="tick">Ticketing</option> <option value="onboard">Onboarding</option> <option value="enroll">Enrollment</option> <option value="nsdc">NSDC</option> <option value="tasks">Tasks</option> <option value="report">Reports</option>
-  </select>
-</div>
-
-<div class="layout">
-  <div class="sidebar">
-    <h2>CSAT Dashboard</h2>
-    <ul>
-      <li id="m-dash" class="active" onclick="switchView('dash')">Dashboard</li>
-      <li id="m-feed" onclick="switchView('feed')">Feedback</li>
-      <li id="m-tick" onclick="switchView('tick')">Ticketing</li>
-      <li id="m-onboard" onclick="switchView('onboard')">Onboarding</li>
-      <li id="m-enroll" onclick="switchView('enroll')">Onboarding Data</li> 
-      <li id="m-nsdc" onclick="switchView('nsdc')">NSDC / Certificate</li> 
-      <li id="m-tasks" onclick="switchView('tasks')">Daily Tasks</li>
-      <li id="m-report" onclick="switchView('report')">Analytics Reports</li>
-    </ul>
+  <div class="mobile-menu">
+    <strong style="color: var(--primary);">CSAT App</strong>
+    <select id="mobile-view-select">
+      <option value="dash">Dashboard</option>
+      <option value="feed">Feedback</option>
+      <option value="tick">Ticketing</option>
+      <option value="onboard">Onboarding</option>
+      <option value="enroll">Enrollment</option>
+      <option value="nsdc">NSDC</option>
+      <option value="tasks">Tasks</option>
+      <option value="report">Reports</option>
+    </select>
   </div>
 
-  <div class="main">
-    <h1 id="page-title">DASHBOARD</h1>
-
-    <div id="view-dash">
-      <div class="filters"><div class="filter-group">Session <select id="dash-session" class="session-sel"><option value="All">All Sessions</option></select></div><div class="filter-group">Rating <select id="dash-rating"><option value="All">All Ratings</option><option value="5">5 Stars</option><option value="4">4 Stars</option><option value="3">3 Stars</option><option value="2">2 Stars</option><option value="1">1 Star</option></select></div><div class="filter-group">Start <input type="date" id="dash-start"></div><div class="filter-group">End <input type="date" id="dash-end"></div><button class="btn-apply" onclick="loadDashboardData()">Apply Filters</button></div>
-      <div class="cards">
-        <div class="card total-feedback"><h3>Total Feedback</h3><h2 id="total">0</h2></div>
-        <div class="card untouched"><h3>Untouched Tickets</h3><h2 id="untouched-count">0</h2></div>
-        <div class="card solved"><h3>Solved Tickets</h3><h2 id="solved-count">0</h2></div>
-        <div class="card onboarding-card"><h3>Pending Enrollment</h3><h2 id="onboard-count">0</h2></div>
-        <div class="card enrolled-card"><h3>Enrolled Count</h3><h2 id="enrolled-count">0</h2></div>
-      </div>
-      <div class="chart-container">
-        <div class="content-section" style="height: 180px;"><canvas id="gaugeChart"></canvas></div>
-        <div class="content-section" style="height: 180px;"><canvas id="distChart"></canvas></div>
-        <div class="content-section full-width-chart"><h4 style="margin: 0 0 10px 0; color: var(--secondary); text-align: center; font-size: 13px;">Date-wise Enrollments</h4><div style="position: relative; height: 210px; width: 100%;"><canvas id="onboardingChart"></canvas></div></div>
-      </div>
+  <div class="layout">
+    <div class="sidebar">
+      <h2>CSAT Dashboard</h2>
+      <ul>
+        <li id="m-dash" class="active" data-view="dash">Dashboard</li>
+        <li id="m-feed" data-view="feed">Feedback</li>
+        <li id="m-tick" data-view="tick">Ticketing</li>
+        <li id="m-onboard" data-view="onboard">Onboarding</li>
+        <li id="m-enroll" data-view="enroll">Onboarding Data</li>
+        <li id="m-nsdc" data-view="nsdc">NSDC / Certificate</li>
+        <li id="m-tasks" data-view="tasks">Daily Tasks</li>
+        <li id="m-report" data-view="report">Analytics Reports</li>
+      </ul>
     </div>
 
-    <div id="view-feed" class="hidden">
-      <div class="filters"><div class="filter-group">Session <select id="feed-session" class="session-sel"><option value="All">All Sessions</option></select></div><div class="filter-group">Rating <select id="feed-rating"><option value="All">All Ratings</option><option value="5">5 Stars</option><option value="4">4 Stars</option><option value="3">3 Stars</option><option value="2">2 Stars</option><option value="1">1 Star</option></select></div><div class="filter-group">Start <input type="date" id="feed-start"></div><div class="filter-group">End <input type="date" id="dash-end-feed"></div><button class="btn-apply" onclick="loadFeedbackData()">Search Feedback</button></div>
-      <div class="table-wrapper"><table><thead><tr><th>Date</th><th>Session</th><th>Name</th><th>Mobile</th><th>Rating</th><th>Comment</th></tr></thead><tbody id="feed-body"></tbody></table></div>
-    </div>
+    <div class="main">
+      <h1 id="page-title">DASHBOARD</h1>
 
-    <div id="view-tick" class="hidden">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; background: white; padding: 15px 25px; border-radius: 15px;"><h3 style="margin: 0; color: var(--secondary);">Ticket Management</h3><button class="btn-apply" onclick="openTicketModal()">+ Raise Ticket</button></div>
-      <div class="table-wrapper" style="margin-top: 0;"><table><thead><tr><th style="width: 30px;"></th><th>Date Raised</th><th>Learner Name</th><th>Course</th><th>Issue Type</th><th>Status</th></tr></thead><tbody id="tick-body"></tbody></table></div>
-    </div>
-
-    <div id="view-onboard" class="hidden"><div class="table-wrapper"><h3>Registered in APP</h3><table><thead><tr><th>Learner Name</th><th>Mobile Number</th><th>Email ID</th><th>Program</th><th>Source</th></tr></thead><tbody id="onboard-body"></tbody></table></div></div>
-
-    <div id="view-enroll" class="hidden">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; background: white; padding: 15px 25px; border-radius: 15px;"><h3 style="margin: 0; color: var(--secondary);">Internal Enrollments</h3><button class="btn-apply" onclick="openEnrollModal()">➕ Add Data</button></div>
-      <div class="table-wrapper" style="margin-top: 0;">
-        <table>
-          <thead><tr><th>Date Added</th><th>Course</th><th>Count</th><th>Onboarded By</th></tr></thead>
-          <tbody id="enroll-body"></tbody>
-        </table>
-      </div>
-    </div>
-
-    <div id="view-nsdc" class="hidden">
-      <div style="display: flex; gap: 15px; margin-bottom: 20px;"><button class="btn-apply" style="background: var(--blue);" onclick="openNsdcModal('Enrollment')">📝 NSDC Enrollment</button><button class="btn-apply" style="background: var(--success);" onclick="openNsdcModal('Certification')">🎓 Certification</button></div>
-      <div class="table-wrapper"><table><thead><tr><th>Date</th><th>Action Type</th><th>Batch Number</th><th>Count</th></tr></thead><tbody id="nsdc-body"></tbody></table></div>
-    </div>
-
-    <div id="view-tasks" class="hidden">
-      <div class="form-section" style="min-height: auto; margin-bottom: 20px; padding: 25px;"><h3 style="margin-top:0">Assign Daily Task</h3><div style="display:grid; grid-template-columns: 2fr 1fr 1fr auto; gap:12px; align-items:end;"><input type="text" id="task-name" placeholder="Enter Task Name..."><select id="task-exec"><option value="Kumud">Kumud</option><option value="Sanskriti">Sanskriti</option><option value="Dhananjaya">Dhananjaya</option></select><select id="task-status"><option value="Pending">Pending</option><option value="Done">Done</option></select><button class="btn-apply" onclick="submitTask()">Add Task</button></div></div>
-      <div class="table-wrapper"><table><thead><tr><th>Date</th><th>Task Name</th><th>Executive</th><th>Status</th><th>Action</th></tr></thead><tbody id="tasks-body"></tbody></table></div>
-    </div>
-
-    <div id="view-report" class="hidden">
-      <div class="filters" style="grid-template-columns: 1.5fr 1fr 1fr 1fr auto;">
-        <div class="filter-group">Session <select id="rep-session" class="session-sel"><option value="All">All Sessions</option></select></div>
-        <div class="filter-group">Format <select id="rep-group"><option value="monthly">Month Wise</option><option value="daily">Date Wise</option></select></div>
-        <div class="filter-group">Start <input type="date" id="rep-start"></div>
-        <div class="filter-group">End <input type="date" id="rep-end"></div>
-        <button class="btn-apply" onclick="loadReportsData()">Generate Report</button>
-      </div>
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
-        <div class="table-wrapper" style="margin-top:0;">
-          <h3 style="margin-top:0; color:var(--primary);">1. Session-wise NPS Report</h3>
-          <table><thead><tr><th>Session Name</th><th>Total Feedback</th><th>NPS Score</th></tr></thead><tbody id="rep-nps-body"></tbody></table>
-        </div>
-        <div class="table-wrapper" style="margin-top:0;">
-          <h3 style="margin-top:0; color:var(--blue);">2. Trainer Performance</h3>
-          <table><thead><tr><th>Trainer Name</th><th>Feedback Count</th><th>Trainer NPS</th></tr></thead><tbody id="rep-trainer-body"></tbody></table>
-        </div>
-        <div class="table-wrapper" style="grid-column: 1 / -1;">
-          <h3 style="margin-top:0; color:var(--purple);">3. Operations & CSAT Report</h3>
-          <table><thead><tr><th>Timeline</th><th>Tasks Completed</th><th>Onboarding Count</th><th>NSDC/Certifications</th></tr></thead><tbody id="rep-ops-body"></tbody></table>
-        </div>
-      </div>
-    </div>
-
-  </div>
-</div>
-
-<script>
-  Chart.register(ChartDataLabels); let gChart, dChart, oChart; 
-  const theme = { orange: '#ff7b2c', navy: '#1f2235', blue: '#3498db', light: '#f0f2f5', purple: '#9b59b6' };
-
-  const API_URL = "https://script.google.com/macros/s/AKfycbzZvoyP-WOdDdUFmktk3XS79mIOkq7sWjAcBBXWthAQBwHmMBJRP33PUE_qkusfqxWb/exec"; 
-
-  async function apiGet(action, params = {}) {
-    try {
-      let url = new URL(API_URL);
-      url.searchParams.append('action', action);
-      for (const k in params) url.searchParams.append(k, params[k]);
-      let res = await fetch(url, { method: 'GET', redirect: "follow", credentials: "omit" });
-      return await res.json();
-    } catch (e) { console.error("API GET Error:", e); return { error: e }; }
-  }
-
-  async function apiPost(action, dataObj = {}) {
-    try {
-      let res = await fetch(API_URL, { 
-        method: 'POST', 
-        headers: { 'Content-Type': 'text/plain;charset=utf-8' }, 
-        body: JSON.stringify({ action: action, data: dataObj }), 
-        redirect: "follow",
-        credentials: "omit"
-      });
-      return await res.json();
-    } catch (e) { console.error("API POST Error:", e); return { error: e }; }
-  }
-
-  function setSyncing(isSyncing) { document.querySelectorAll('.card, .content-section, .table-wrapper').forEach(el => isSyncing ? el.classList.add('syncing') : el.classList.remove('syncing')); }
-
-  function renderCharts(s) {
-    if(gChart) gChart.destroy(); if(dChart) dChart.destroy();
-    const centerPlugin = { id: 'centerPlugin', afterDraw(chart) { const {ctx, chartArea: {top, bottom, left, right, height}} = chart; ctx.save(); const centerX = (left + right)/2; const centerY = (top + bottom)/2; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.font = `bold ${(height / 3).toFixed(0)}px Segoe UI`; ctx.fillStyle = '#000000'; ctx.fillText(s.nps, centerX, centerY + (height / 8)); ctx.font = `600 ${(height / 8).toFixed(0)}px Segoe UI`; ctx.fillStyle = '#888888'; ctx.fillText("CSAT", centerX, centerY + (height / 3.2)); ctx.restore(); } };
-    gChart = new Chart(document.getElementById("gaugeChart"), { type: 'doughnut', data: { datasets: [{ data: [s.nps+100, 200-(s.nps+100)], backgroundColor: [theme.orange, theme.light], borderWidth: 0, cutout: '82%' }] }, options: { responsive: true, maintainAspectRatio: false, rotation: -90, circumference: 180, plugins: { legend: { display: false }, datalabels: { display: false } } }, plugins: [centerPlugin] });
-    dChart = new Chart(document.getElementById("distChart"), { type: 'pie', data: { labels: [`Promoters: ${s.promoters}`, `Passives: ${s.passives}`, `Detractors: ${s.detractors}`], datasets: [{ data: [s.promoters, s.passives, s.detractors], backgroundColor: [theme.orange, '#cbd5e1', theme.navy] }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { boxWidth: 12, font: { size: 13, weight: 'bold' } } }, datalabels: { display: false } } } });
-  }
-
-  function renderOnboardingChart(chartData) {
-    if(oChart) oChart.destroy();
-    if (!chartData || chartData.labels.length === 0) { const ctx = document.getElementById("onboardingChart").getContext("2d"); ctx.font = "14px Segoe UI"; ctx.fillStyle = "#888"; ctx.textAlign = "center"; ctx.fillText("No Enrollment Data Available", 250, 100); return; }
-    oChart = new Chart(document.getElementById("onboardingChart"), { type: 'line', data: { labels: chartData.labels, datasets: [{ label: 'Enrollments', data: chartData.data, borderColor: theme.blue, backgroundColor: 'rgba(52, 152, 219, 0.2)', borderWidth: 2, fill: true, tension: 0.3, pointBackgroundColor: theme.blue, pointRadius: 4 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, datalabels: { display: true, align: 'top', color: theme.navy, font: { weight: 'bold', size: 11 } } }, scales: { y: { beginAtZero: true, grid: { color: '#eee' }, ticks: { stepSize: 1 } }, x: { grid: { display: false } } } } });
-  }
-
-  function switchView(v) {
-    document.querySelectorAll('[id^="view-"]').forEach(el => el.classList.add('hidden')); document.getElementById('view-' + v).classList.remove('hidden');
-    document.querySelectorAll('.sidebar li').forEach(el => el.classList.remove('active')); 
-    let activeTab = document.getElementById('m-' + v); if(activeTab) activeTab.classList.add('active');
-    
-    let titleText = v.toUpperCase(); 
-    if (v === 'dash') titleText = 'DASHBOARD'; 
-    if (v === 'tick') titleText = 'TICKETING'; 
-    if (v === 'enroll') titleText = 'ONBOARDING DATA'; 
-    if (v === 'nsdc') titleText = 'NSDC / CERTIFICATE'; 
-    if (v === 'tasks') titleText = 'DAILY TASKS'; 
-    if (v === 'report') titleText = 'ANALYTICS REPORTS';
-    document.getElementById('page-title').innerText = titleText;
-    
-    if(v === 'dash') loadDashboardData(); if(v === 'feed') loadFeedbackData(); if(v === 'tick') loadTickets(); if(v === 'onboard') loadOnboardTable(); if(v === 'enroll') loadEnrollData(); if(v === 'nsdc') loadNsdcData(); if(v === 'tasks') loadTasks(); if(v === 'report') loadReportsData();
-  }
-
-  async function loadDashboardData() {
-    setSyncing(true);
-    let p = { session: document.getElementById("dash-session").value, rating: document.getElementById("dash-rating").value, start: document.getElementById("dash-start").value, end: document.getElementById("dash-end").value };
-    let res = await apiGet('getDashboardData', p);
-    if(res && !res.error) {
-      document.getElementById("total").innerText = res.stats.total; renderCharts(res.stats);
-      document.getElementById("untouched-count").innerText = res.untouched; document.getElementById("solved-count").innerText = res.solved;
-      document.getElementById("onboard-count").innerText = res.onboardCount; document.getElementById("enrolled-count").innerText = res.enrolledCount;
-      renderOnboardingChart(res.chartData);
-    }
-    setSyncing(false);
-  }
-
-  async function loadFeedbackData() {
-    setSyncing(true);
-    let p = { session: document.getElementById("feed-session").value, rating: document.getElementById("feed-rating").value, start: document.getElementById("feed-start").value, end: document.getElementById("dash-end-feed").value };
-    let res = await apiGet('getFeedbackData', p);
-    if(res && res.feedbacks) { document.getElementById("feed-body").innerHTML = res.feedbacks.map(r => `<tr><td>${r.date}</td><td>${r.session}</td><td><strong>${r.name}</strong></td><td>${r.mobile}</td><td><span class="badge" style="background:${theme.orange}">${r.rating} ★</span></td><td>${r.comment}</td></tr>`).join(''); }
-    setSyncing(false);
-  }
-
-  function toggleDetails(rId) { let d = document.getElementById('details-'+rId), b = document.getElementById('btn-'+rId); if(d.style.display==='none'){ d.style.display='table-row'; b.style.transform='rotate(90deg)';} else { d.style.display='none'; b.style.transform='rotate(0deg)'; } }
-
-  async function loadTickets() {
-    setSyncing(true);
-    let list = await apiGet('getTickets');
-    if(list && !list.error) {
-      document.getElementById("tick-body").innerHTML = list.map(t => {
-        let pC = (t.priority === 'High' || t.priority === 'Urgent') ? '#e74c3c' : (t.priority === 'Medium' ? '#f39c12' : '#3498db'); let sC = t.status === 'Solved' ? '#2ecc71' : (t.status === 'Escalated' ? '#f39c12' : '#e74c3c');
-        let tH = (t.tat !== "-" && t.tat !== "" && t.tat !== "N/A") ? `<span class="badge" style="background:#3d4466; font-size:11px;">⏱️ ${t.tat}</span>` : `<span style="color:#aaa; font-size:12px; font-weight:600;">Pending</span>`;
-        let sD = JSON.stringify(t).replace(/'/g, "&apos;").replace(/"/g, '&quot;');
-        let iRem = t.remark || "-", rRem = ""; if (iRem.includes("[Res]:")) { let pts = iRem.split("[Res]:"); iRem = pts[0].trim(); rRem = pts.slice(1).join("\\nUpdate: ").trim(); }
-        return `<tr class="main-row" style="cursor: pointer;" onclick="toggleDetails(${t.row})"> <td style="text-align:center;"><button id="btn-${t.row}" class="toggle-btn" style="pointer-events:none;">▶</button></td> <td>${t.dateRaised}</td> <td><strong>${t.name}</strong></td> <td>${t.course}</td> <td><strong>${t.issue}</strong></td> <td><span class="badge" style="background:${sC}">${t.status}</span></td> </tr> <tr id="details-${t.row}" style="display:none;"> <td colspan="6" style="padding:0; border-bottom:1px solid #eee;"> <div class="detail-row-content"> <div> <h4 style="margin:0 0 10px 0; font-size:13px; color:var(--secondary); text-transform:uppercase;">Details</h4> <p style="margin:5px 0; font-size:13px;"><strong>Phone:</strong> ${t.phone}</p> <p style="margin:5px 0; font-size:13px;"><strong>Source:</strong> ${t.source}</p> <p style="margin:5px 0; font-size:13px;"><strong>Assigned To:</strong> ${t.assigned}</p> <p style="margin:8px 0; font-size:13px;"><strong>Priority:</strong> <span class="badge" style="background:${pC}; font-size:10px; padding:3px 8px;">${t.priority}</span></p> </div> <div> <h4 style="margin:0 0 10px 0; font-size:13px; color:var(--secondary); text-transform:uppercase;">Timeline & Remarks</h4> <p style="margin:5px 0; font-size:13px;"><strong>TAT:</strong> ${tH}</p> <p style="margin:5px 0; font-size:13px;"><strong>Resolved On:</strong> ${t.dateResolved}</p> <div style="margin-top:10px; padding:10px; background:#fff; border-radius:6px; border:1px solid #eee;"> <strong style="font-size:12px; color:#888;">Issue:</strong> <p style="margin:5px 0 0 0; font-size:13px;">${iRem}</p> ${rRem ? `<div style="margin-top: 12px; padding-top: 10px; border-top: 1px dashed #ddd;"><strong style="font-size:12px; color:#888;">Resolution:</strong><p style="margin:5px 0 0 0; font-size:13px; color:${t.status==='Escalated'?'#f39c12':'#2ecc71'}; font-weight:600;">${rRem}</p></div>` : ''} </div> </div> <div style="border-left:1px solid #ddd; padding-left:20px; min-width: 150px;"> <h4 style="margin:0 0 10px 0; font-size:13px; color:var(--secondary); text-transform:uppercase;">Actions</h4> ${t.status === 'Solved' ? `<div style="padding-top:10px;"><span style="color:#2ecc71; font-size:13px; font-weight:bold;">✔️ Closed</span></div>` : `<div style="display:flex; flex-direction:column; gap:8px;"><select style="padding:8px; font-size:12px; border:1px solid #ddd; border-radius:5px;" onchange="handleStatusChange(${t.row}, this.value)"><option value="Untouched" ${t.status === 'Untouched' ? 'selected' : ''}>Untouched</option><option value="Escalated" ${t.status === 'Escalated' ? 'selected' : ''}>Escalated</option><option value="Solved" ${t.status === 'Solved' ? 'selected' : ''}>Solved</option></select><button onclick='openEditModal(${sD})' style="background:var(--primary); border:none; border-radius:5px; padding:8px; cursor:pointer; font-size:12px; font-weight:bold; color:white;">✏️ Edit Info</button></div>`} </div> </div> </td> </tr>`;
-      }).join('');
-    }
-    setSyncing(false);
-  }
-
-  async function handleStatusChange(row, status) {
-    let r = ""; if (status === "Solved" || status === "Escalated") { const { value: t } = await Swal.fire({ title: status === 'Solved' ? 'Resolution Remark' : 'Escalation Reason', input: 'text', showCancelButton: true, confirmButtonColor: status === 'Solved' ? '#2ecc71' : '#f39c12' }); if (t) r = t; else if (t === undefined) { loadTickets(); return; } }
-    setSyncing(true); await apiPost('updateTicketStatus', {row: row, status: status, remark: r});
-    loadTickets(); Swal.fire({ icon: 'success', title: 'Updated!', showConfirmButton: false, timer: 1500 });
-  }
-
-  // 🚀 NAYE OPTIONS ADDED HERE
- async function openTicketModal() {
-    const { value: v } = await Swal.fire({ 
-      title: 'Raise Ticket', 
-      html: `
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; text-align: left; margin-top: 15px;">
-          <div><label style="font-size: 13px; font-weight: 600;">Name *</label><input id="s-n" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px; box-sizing:border-box;"></div>
-          <div><label style="font-size: 13px; font-weight: 600;">Phone</label><input id="s-p" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px; box-sizing:border-box;"></div>
-          <div><label style="font-size: 13px; font-weight: 600;">Course</label>
-            <select id="s-c" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px; box-sizing:border-box;">
-              <option value="N/A">N/A</option>
-              <option value="Fashion Designing">Fashion Designing</option>
-              <option value="Cosmetology">Cosmetology</option>
+      <div id="view-dash">
+        <div class="filters">
+          <div class="filter-group">
+            Session
+            <select id="dash-session" class="session-sel">
+              <option value="All">All Sessions</option>
             </select>
           </div>
-          <div><label style="font-size: 13px; font-weight: 600;">Issue *</label>
-            <select id="s-i" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px; box-sizing:border-box;">
-              <option value="" disabled selected>What do you need help with?</option>
-              <option value="NSDC">NSDC</option>
-              <option value="KIT">KIT</option>
-              <option value="Finance">Finance</option>
-              <option value="Training">Training</option>
-              <option value="Onboarding">Onboarding</option>
-              <option value="Cancellation">Cancellation</option>
-              <option value="Exam">Exam</option>
-              <option value="Certificate">Certificate</option>
-              <option value="Portfolio">Portfolio</option>
-              <option value="Extension">Extension</option>
+          <div class="filter-group">
+            Rating
+            <select id="dash-rating">
+              <option value="All">All Ratings</option>
+              <option value="5">5 Stars</option>
+              <option value="4">4 Stars</option>
+              <option value="3">3 Stars</option>
+              <option value="2">2 Stars</option>
+              <option value="1">1 Star</option>
             </select>
           </div>
-        </div>`, 
-      width: '600px', 
-      preConfirm: () => { 
-        const n = document.getElementById('s-n').value, i = document.getElementById('s-i').value; 
-        if (!n || !i) { Swal.showValidationMessage('Name & Issue required'); return false; } 
-        return { name: n, phone: document.getElementById('s-p').value, course: document.getElementById('s-c').value, issue: i }; 
-      } 
-    });
-    if (v) { setSyncing(true); await apiPost('saveTicket', v); loadTickets(); Swal.fire({icon: 'success', title: 'Created', timer: 1500}); }
-  }
+          <div class="filter-group">
+            Start
+            <input type="date" id="dash-start" />
+          </div>
+          <div class="filter-group">
+            End
+            <input type="date" id="dash-end" />
+          </div>
+          <button class="btn-apply" id="dash-apply">Apply Filters</button>
+        </div>
 
-  async function openEditModal(t) {
-    const { value: v } = await Swal.fire({ title: 'Edit Ticket', html: `<select id="e-p"><option value="Urgent">Urgent</option><option value="Medium" selected>Medium</option></select>`, preConfirm: () => { return { priority: document.getElementById('e-p').value }; } });
-    if(v) { setSyncing(true); await apiPost('editTicketDetails', {row: t.row, info: v}); loadTickets(); }
-  }
+        <div class="cards">
+          <div class="card total-feedback"><h3>Total Feedback</h3><h2 id="total">0</h2></div>
+          <div class="card untouched"><h3>Untouched Tickets</h3><h2 id="untouched-count">0</h2></div>
+          <div class="card solved"><h3>Solved Tickets</h3><h2 id="solved-count">0</h2></div>
+          <div class="card onboarding-card"><h3>Pending Enrollment</h3><h2 id="onboard-count">0</h2></div>
+          <div class="card enrolled-card"><h3>Enrolled Count</h3><h2 id="enrolled-count">0</h2></div>
+        </div>
 
-  async function loadOnboardTable() { setSyncing(true); let list = await apiGet('getOnboardingTable'); if(list && !list.error) document.getElementById("onboard-body").innerHTML = list.map(r => `<tr><td><strong>${r.name}</strong></td><td>${r.phone}</td><td>${r.email}</td><td><span class="badge" style="background:var(--blue)">${r.program}</span></td><td>${r.source}</td></tr>`).join(''); setSyncing(false); }
-  
-  async function openEnrollModal() {
-    const { value: v } = await Swal.fire({ 
-      title: 'New Enrollment', 
-      html: `
-        <div style="text-align: left; margin-top: 15px;">
-          <div style="margin-bottom: 15px;">
-            <label style="font-size: 13px; font-weight: 600; color: var(--secondary);">Course Name *</label>
-            <select id="en-c" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px; box-sizing:border-box; margin-top: 5px;">
-              <option value="" disabled selected>Select Course...</option>
-              <option value="Activation">Activation</option>
-              <option value="Fashion Designing">Fashion Designing</option>
-              <option value="Cosmetology">Cosmetology</option>
-              <option value="Others">Others</option>
+        <div class="chart-container">
+          <div class="content-section" style="height: 180px;"><canvas id="gaugeChart"></canvas></div>
+          <div class="content-section" style="height: 180px;"><canvas id="distChart"></canvas></div>
+          <div class="content-section full-width-chart">
+            <h4 style="margin: 0 0 10px; color: var(--secondary); text-align: center; font-size: 13px;">Date-wise Enrollments</h4>
+            <div style="position: relative; height: 210px; width: 100%;">
+              <canvas id="onboardingChart"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="view-feed" class="hidden">
+        <div class="filters">
+          <div class="filter-group">
+            Session
+            <select id="feed-session" class="session-sel">
+              <option value="All">All Sessions</option>
             </select>
           </div>
-          <div style="margin-bottom: 15px;">
-            <label style="font-size: 13px; font-weight: 600; color: var(--secondary);">Enrollment Count *</label>
-            <input type="number" id="en-count" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px; box-sizing:border-box; margin-top: 5px;" placeholder="Number of enrollments">
+          <div class="filter-group">
+            Rating
+            <select id="feed-rating">
+              <option value="All">All Ratings</option>
+              <option value="5">5 Stars</option>
+              <option value="4">4 Stars</option>
+              <option value="3">3 Stars</option>
+              <option value="2">2 Stars</option>
+              <option value="1">1 Star</option>
+            </select>
           </div>
-          <div style="margin-bottom: 5px;">
-            <label style="font-size: 13px; font-weight: 600; color: var(--secondary);">Onboarded By *</label>
-            <select id="en-by" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px; box-sizing:border-box; margin-top: 5px;">
+          <div class="filter-group">
+            Start
+            <input type="date" id="feed-start" />
+          </div>
+          <div class="filter-group">
+            End
+            <input type="date" id="feed-end" />
+          </div>
+          <button class="btn-apply" id="feed-apply">Search Feedback</button>
+        </div>
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Session</th>
+                <th>Name</th>
+                <th>Mobile</th>
+                <th>Rating</th>
+                <th>Comment</th>
+              </tr>
+            </thead>
+            <tbody id="feed-body"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div id="view-tick" class="hidden">
+        <div class="toolbar">
+          <h3 style="margin: 0; color: var(--secondary);">Ticket Management</h3>
+          <button class="btn-apply" id="raise-ticket-btn">+ Raise Ticket</button>
+        </div>
+        <div class="table-wrapper" style="margin-top: 0;">
+          <table>
+            <thead>
+              <tr>
+                <th style="width: 30px;"></th>
+                <th>Date Raised</th>
+                <th>Learner Name</th>
+                <th>Course</th>
+                <th>Issue Type</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="tick-body"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div id="view-onboard" class="hidden">
+        <div class="table-wrapper">
+          <h3>Registered in APP</h3>
+          <table>
+            <thead>
+              <tr>
+                <th>Learner Name</th>
+                <th>Mobile Number</th>
+                <th>Email ID</th>
+                <th>Program</th>
+                <th>Source</th>
+              </tr>
+            </thead>
+            <tbody id="onboard-body"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div id="view-enroll" class="hidden">
+        <div class="toolbar">
+          <h3 style="margin: 0; color: var(--secondary);">Internal Enrollments</h3>
+          <button class="btn-apply" id="open-enroll-btn">Add Data</button>
+        </div>
+        <div class="table-wrapper" style="margin-top: 0;">
+          <table>
+            <thead>
+              <tr>
+                <th>Date Added</th>
+                <th>Course</th>
+                <th>Count</th>
+                <th>Onboarded By</th>
+              </tr>
+            </thead>
+            <tbody id="enroll-body"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div id="view-nsdc" class="hidden">
+        <div style="display: flex; gap: 15px; margin-bottom: 20px;">
+          <button class="btn-apply" style="background: var(--blue);" data-nsdc-type="Enrollment">NSDC Enrollment</button>
+          <button class="btn-apply" style="background: var(--success);" data-nsdc-type="Certification">Certification</button>
+        </div>
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Action Type</th>
+                <th>Batch Number</th>
+                <th>Count</th>
+              </tr>
+            </thead>
+            <tbody id="nsdc-body"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div id="view-tasks" class="hidden">
+        <div class="form-section" style="min-height: auto; margin-bottom: 20px; padding: 25px;">
+          <h3 style="margin-top: 0;">Assign Daily Task</h3>
+          <div style="display: grid; grid-template-columns: 2fr 1fr 1fr auto; gap: 12px; align-items: end;">
+            <input type="text" id="task-name" placeholder="Enter Task Name..." />
+            <select id="task-exec">
               <option value="Kumud">Kumud</option>
               <option value="Sanskriti">Sanskriti</option>
               <option value="Dhananjaya">Dhananjaya</option>
-              <option value="Web">Web (Form)</option>
+            </select>
+            <select id="task-status">
+              <option value="Pending">Pending</option>
+              <option value="Done">Done</option>
+            </select>
+            <button class="btn-apply" id="add-task-btn">Add Task</button>
+          </div>
+        </div>
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Task Name</th>
+                <th>Executive</th>
+                <th>Status</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="tasks-body"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div id="view-report" class="hidden">
+        <div class="filters" style="grid-template-columns: 1.5fr 1fr 1fr 1fr auto;">
+          <div class="filter-group">
+            Session
+            <select id="rep-session" class="session-sel">
+              <option value="All">All Sessions</option>
             </select>
           </div>
-        </div>
-      `, 
-      showCancelButton: true,
-      confirmButtonColor: '#ff7b2c',
-      cancelButtonColor: '#aaa',
-      confirmButtonText: 'Save Data',
-      preConfirm: () => { 
-        const c = document.getElementById('en-c').value;
-        const cnt = document.getElementById('en-count').value;
-        const by = document.getElementById('en-by').value;
-        if(!c || !cnt) { Swal.showValidationMessage('Please fill all fields'); return false; }
-        
-        const d = new Date();
-        const cleanMonth = d.toLocaleString('default', { month: 'short' }) + "-" + d.getFullYear(); 
-        
-        return { course: c, month: cleanMonth, count: cnt, by: by }; 
-      } 
-    });
-    if (v) { setSyncing(true); await apiPost('saveEnrollmentData', v); loadEnrollData(); Swal.fire({icon: 'success', title: 'Saved!', showConfirmButton: false, timer: 1500}); }
-  }
-  
-  async function loadEnrollData() { 
-    setSyncing(true); 
-    let list = await apiGet('getEnrollmentData'); 
-    if(list && !list.error) {
-      document.getElementById('enroll-body').innerHTML = list.map(r => `<tr><td>${r.date}</td><td><strong>${r.course}</strong></td><td><span class="badge" style="background:var(--blue);">${r.count}</span></td><td>${r.by}</td></tr>`).join(''); 
-    }
-    setSyncing(false); 
-  }
-
-  async function openNsdcModal(type) {
-    const { value: v } = await Swal.fire({ 
-      title: type, 
-      html: `
-        <div style="text-align: left; margin-top: 15px;">
-          <div style="margin-bottom: 15px;">
-            <label style="font-size: 13px; font-weight: 600; color: var(--secondary);">Batch Number *</label>
-            <input id="n-b" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px; box-sizing:border-box; margin-top: 5px;" placeholder="Enter Batch No.">
+          <div class="filter-group">
+            Format
+            <select id="rep-group">
+              <option value="monthly">Month Wise</option>
+              <option value="daily">Date Wise</option>
+            </select>
           </div>
-          <div>
-            <label style="font-size: 13px; font-weight: 600; color: var(--secondary);">Count *</label>
-            <input type="number" id="n-c" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px; box-sizing:border-box; margin-top: 5px;" placeholder="Enter Count">
+          <div class="filter-group">
+            Start
+            <input type="date" id="rep-start" />
+          </div>
+          <div class="filter-group">
+            End
+            <input type="date" id="rep-end" />
+          </div>
+          <button class="btn-apply" id="rep-apply">Generate Report</button>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+          <div class="table-wrapper" style="margin-top: 0;">
+            <h3 style="margin-top: 0; color: var(--primary);">1. Session-wise NPS Report</h3>
+            <table>
+              <thead>
+                <tr>
+                  <th>Session Name</th>
+                  <th>Total Feedback</th>
+                  <th>NPS Score</th>
+                </tr>
+              </thead>
+              <tbody id="rep-nps-body"></tbody>
+            </table>
+          </div>
+
+          <div class="table-wrapper" style="margin-top: 0;">
+            <h3 style="margin-top: 0; color: var(--blue);">2. Trainer Performance</h3>
+            <table>
+              <thead>
+                <tr>
+                  <th>Trainer Name</th>
+                  <th>Feedback Count</th>
+                  <th>Trainer NPS</th>
+                </tr>
+              </thead>
+              <tbody id="rep-trainer-body"></tbody>
+            </table>
+          </div>
+
+          <div class="table-wrapper" style="grid-column: 1 / -1;">
+            <h3 style="margin-top: 0; color: var(--purple);">3. Operations & CSAT Report</h3>
+            <table>
+              <thead>
+                <tr>
+                  <th>Timeline</th>
+                  <th>Tasks Completed</th>
+                  <th>Onboarding Count</th>
+                  <th>NSDC/Certifications</th>
+                </tr>
+              </thead>
+              <tbody id="rep-ops-body"></tbody>
+            </table>
           </div>
         </div>
-      `,
-      showCancelButton: true,
-      confirmButtonColor: type === 'Enrollment' ? '#3498db' : '#2ecc71',
-      cancelButtonColor: '#aaa',
-      confirmButtonText: 'Save Data',
-      preConfirm: () => { 
-        const b = document.getElementById('n-b').value;
-        const c = document.getElementById('n-c').value;
-        if(!b || !c) { Swal.showValidationMessage('Please fill all fields'); return false; }
-        return { type: type, batch: b, count: c }; 
-      } 
-    });
-    if(v) { setSyncing(true); await apiPost('saveNsdcData', v); loadNsdcData(); Swal.fire({icon: 'success', title: 'Saved!', showConfirmButton: false, timer: 1500}); }
-  }
+      </div>
+    </div>
+  </div>
 
-  async function loadNsdcData() { setSyncing(true); let list = await apiGet('getNsdcData'); if(list && !list.error) document.getElementById('nsdc-body').innerHTML = list.map(r => `<tr><td>${r.date}</td><td><strong>${r.type}</strong></td><td>${r.batch}</td><td><span class="badge" style="background:var(--blue);">${r.count}</span></td></tr>`).join(''); setSyncing(false); }
+  <script>
+    const API_URL = "https://script.google.com/macros/s/AKfycbzZvoyP-WOdDdUFmktk3XS79mIOkq7sWjAcBBXWthAQBwHmMBJRP33PUE_qkusfqxWb/exec";
 
-  async function loadTasks() { setSyncing(true); let list = await apiGet('getTasks'); if(list && !list.error) document.getElementById("tasks-body").innerHTML = list.map(t => `<tr><td>${t.date}</td><td><strong>${t.task}</strong></td><td>${t.executive}</td><td><span class="badge" style="background:${t.status === 'Done' ? '#2ecc71' : '#e74c3c'}">${t.status}</span></td><td>${t.status === 'Done' ? '✔️' : `<select onchange="updateTask(${t.row}, this.value)"><option value="Pending">Pending</option><option value="Done">Done</option></select>`}</td></tr>`).join(''); setSyncing(false); }
-
-  async function submitTask() { let d = { task: document.getElementById('task-name').value, exec: document.getElementById('task-exec').value, status: document.getElementById('task-status').value }; if(!d.task) return; setSyncing(true); await apiPost('saveTask', d); document.getElementById('task-name').value = ''; loadTasks(); }
-  
-  async function updateTask(r, s) { setSyncing(true); await apiPost('updateTaskStatusRow', {row: r, status: s}); loadTasks(); }
-
-  async function loadReportsData() {
-    setSyncing(true);
-    let p = { 
-      session: document.getElementById("rep-session").value, 
-      groupBy: document.getElementById("rep-group").value, 
-      start: document.getElementById("rep-start").value, 
-      end: document.getElementById("rep-end").value 
+    const theme = {
+      orange: "#ff7b2c",
+      navy: "#1f2235",
+      blue: "#3498db",
+      light: "#f0f2f5",
+      purple: "#9b59b6",
+      success: "#2ecc71",
+      danger: "#e74c3c",
+      warning: "#f39c12"
     };
-    let res = await apiGet('getReportsData', p);
-    if(res && !res.error) {
-      document.getElementById("rep-nps-body").innerHTML = res.npsReport.length ? res.npsReport.map(r => `<tr><td><strong>${r.key}</strong></td><td>${r.total}</td><td><span class="badge" style="background:${r.nps >= 50 ? '#2ecc71' : (r.nps > 0 ? '#f39c12' : '#e74c3c')}">${r.nps}</span></td></tr>`).join('') : `<tr><td colspan="3">No Data Found</td></tr>`;
-      document.getElementById("rep-trainer-body").innerHTML = res.trainerReport.length ? res.trainerReport.map(r => `<tr><td><strong>${r.key}</strong></td><td>${r.total}</td><td><span class="badge" style="background:${r.nps >= 50 ? '#2ecc71' : (r.nps > 0 ? '#f39c12' : '#e74c3c')}">${r.nps}</span></td></tr>`).join('') : `<tr><td colspan="3">No Data Found / Trainer Column Missing</td></tr>`;
-      document.getElementById("rep-ops-body").innerHTML = res.opsReport.length ? res.opsReport.map(r => `<tr><td><strong>${r.key}</strong></td><td>${r.tasks || 0}</td><td>${r.onboard || 0}</td><td>${r.nsdc || 0}</td></tr>`).join('') : `<tr><td colspan="4">No Data Found</td></tr>`;
-    }
-    setSyncing(false);
-  }
 
-  window.onload = async () => { 
-    const now = new Date(); const y = now.getFullYear(); const m = String(now.getMonth() + 1).padStart(2, '0');
-    const startStr = `${y}-${m}-01`; const endStr = `${y}-${m}-${new Date(y, now.getMonth() + 1, 0).getDate()}`;
-    
-    document.getElementById("dash-start").value = startStr; document.getElementById("dash-end").value = endStr;
-    document.getElementById("feed-start").value = startStr; document.getElementById("dash-end-feed").value = endStr;
-    document.getElementById("rep-start").value = startStr; document.getElementById("rep-end").value = endStr;
-    
-    let list = await apiGet('getSessions');
-    if(list && !list.error) document.querySelectorAll(".session-sel").forEach(sel => list.forEach(n => { let o=document.createElement("option"); o.value=n; o.text=n; sel.add(o); }));
-    loadDashboardData();
-  };
-</script>
+    const $ = (id) => document.getElementById(id);
+    const $$ = (selector) => Array.from(document.querySelectorAll(selector));
+
+    const el = {};
+    const charts = {
+      gauge: null,
+      dist: null,
+      onboarding: null
+    };
+
+    const viewConfig = {
+      dash: { title: "DASHBOARD", loader: loadDashboardData },
+      feed: { title: "FEEDBACK", loader: loadFeedbackData },
+      tick: { title: "TICKETING", loader: loadTickets },
+      onboard: { title: "ONBOARDING", loader: loadOnboardTable },
+      enroll: { title: "ONBOARDING DATA", loader: loadEnrollData },
+      nsdc: { title: "NSDC / CERTIFICATE", loader: loadNsdcData },
+      tasks: { title: "DAILY TASKS", loader: loadTasks },
+      report: { title: "ANALYTICS REPORTS", loader: loadReportsData }
+    };
+
+    function cacheElements() {
+      [
+        "page-title", "total", "untouched-count", "solved-count", "onboard-count", "enrolled-count",
+        "dash-session", "dash-rating", "dash-start", "dash-end",
+        "feed-session", "feed-rating", "feed-start", "feed-end",
+        "feed-body", "tick-body", "onboard-body", "enroll-body", "nsdc-body", "tasks-body",
+        "rep-session", "rep-group", "rep-start", "rep-end",
+        "rep-nps-body", "rep-trainer-body", "rep-ops-body",
+        "task-name", "task-exec", "task-status", "mobile-view-select"
+      ].forEach((id) => { el[id] = $(id); });
+    }
+
+    function escapeHtml(value) {
+      return String(value ?? "").replace(/[&<>"']/g, (char) => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#39;"
+      }[char]));
+    }
+
+    function makeBadge(text, background, extraStyle = "") {
+      return `<span class="badge" style="background:${background};${extraStyle}">${escapeHtml(text)}</span>`;
+    }
+
+    function rowOrEmpty(rows, colspan, message = "No Data Found") {
+      return rows.length ? rows.join("") : `<tr><td colspan="${colspan}">${message}</td></tr>`;
+    }
+
+    function setSyncing(isSyncing) {
+      $$(".card, .content-section, .table-wrapper").forEach((node) => {
+        node.classList.toggle("syncing", isSyncing);
+      });
+    }
+
+    async function request(method, action, payload = {}) {
+      try {
+        let response;
+
+        if (method === "GET") {
+          const url = new URL(API_URL);
+          url.searchParams.set("action", action);
+
+          Object.entries(payload).forEach(([key, value]) => {
+            url.searchParams.set(key, value ?? "");
+          });
+
+          response = await fetch(url.toString(), {
+            method: "GET",
+            redirect: "follow",
+            credentials: "omit"
+          });
+        } else {
+          response = await fetch(API_URL, {
+            method: "POST",
+            headers: { "Content-Type": "text/plain;charset=utf-8" },
+            body: JSON.stringify({ action, data: payload }),
+            redirect: "follow",
+            credentials: "omit"
+          });
+        }
+
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
+        }
+
+        return await response.json();
+      } catch (error) {
+        console.error(`${method} ${action} failed`, error);
+        return { error: error.message || String(error) };
+      }
+    }
+
+    function apiGet(action, params = {}) {
+      return request("GET", action, params);
+    }
+
+    function apiPost(action, data = {}) {
+      return request("POST", action, data);
+    }
+
+    function destroyChart(name) {
+      if (charts[name]) {
+        charts[name].destroy();
+        charts[name] = null;
+      }
+    }
+
+    function renderCharts(stats) {
+      destroyChart("gauge");
+      destroyChart("dist");
+
+      const centerPlugin = {
+        id: "centerPlugin",
+        afterDraw(chart) {
+          const { ctx, chartArea } = chart;
+          const { top, bottom, left, right, height } = chartArea;
+          const centerX = (left + right) / 2;
+          const centerY = (top + bottom) / 2;
+
+          ctx.save();
+          ctx.textAlign = "center";
+          ctx.textBaseline = "middle";
+          ctx.font = `bold ${(height / 3).toFixed(0)}px Segoe UI`;
+          ctx.fillStyle = "#000";
+          ctx.fillText(stats.nps, centerX, centerY + (height / 8));
+          ctx.font = `600 ${(height / 8).toFixed(0)}px Segoe UI`;
+          ctx.fillStyle = "#888";
+          ctx.fillText("CSAT", centerX, centerY + (height / 3.2));
+          ctx.restore();
+        }
+      };
+
+      charts.gauge = new Chart($("gaugeChart"), {
+        type: "doughnut",
+        data: {
+          datasets: [{
+            data: [stats.nps + 100, 200 - (stats.nps + 100)],
+            backgroundColor: [theme.orange, theme.light],
+            borderWidth: 0,
+            cutout: "82%"
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          rotation: -90,
+          circumference: 180,
+          plugins: {
+            legend: { display: false },
+            datalabels: { display: false }
+          }
+        },
+        plugins: [centerPlugin]
+      });
+
+      charts.dist = new Chart($("distChart"), {
+        type: "pie",
+        data: {
+          labels: [
+            `Promoters: ${stats.promoters}`,
+            `Passives: ${stats.passives}`,
+            `Detractors: ${stats.detractors}`
+          ],
+          datasets: [{
+            data: [stats.promoters, stats.passives, stats.detractors],
+            backgroundColor: [theme.orange, "#cbd5e1", theme.navy]
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: "right",
+              labels: {
+                boxWidth: 12,
+                font: { size: 13, weight: "bold" }
+              }
+            },
+            datalabels: { display: false }
+          }
+        }
+      });
+    }
+
+    function renderOnboardingChart(chartData) {
+      destroyChart("onboarding");
+
+      const canvas = $("onboardingChart");
+      const ctx = canvas.getContext("2d");
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      if (!chartData || !chartData.labels || chartData.labels.length === 0) {
+        ctx.font = "14px Segoe UI";
+        ctx.fillStyle = "#888";
+        ctx.textAlign = "center";
+        ctx.fillText("No Enrollment Data Available", canvas.width / 2 || 250, 100);
+        return;
+      }
+
+      charts.onboarding = new Chart(canvas, {
+        type: "line",
+        data: {
+          labels: chartData.labels,
+          datasets: [{
+            label: "Enrollments",
+            data: chartData.data,
+            borderColor: theme.blue,
+            backgroundColor: "rgba(52, 152, 219, 0.2)",
+            borderWidth: 2,
+            fill: true,
+            tension: 0.3,
+            pointBackgroundColor: theme.blue,
+            pointRadius: 4
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            datalabels: {
+              display: true,
+              align: "top",
+              color: theme.navy,
+              font: { weight: "bold", size: 11 }
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              grid: { color: "#eee" },
+              ticks: { stepSize: 1 }
+            },
+            x: {
+              grid: { display: false }
+            }
+          }
+        }
+      });
+    }
+
+    async function loadDashboardData() {
+      setSyncing(true);
+
+      const params = {
+        session: el["dash-session"].value,
+        rating: el["dash-rating"].value,
+        start: el["dash-start"].value,
+        end: el["dash-end"].value
+      };
+
+      const res = await apiGet("getDashboardData", params);
+
+      if (res && !res.error) {
+        el["total"].textContent = res.stats.total;
+        el["untouched-count"].textContent = res.untouched;
+        el["solved-count"].textContent = res.solved;
+        el["onboard-count"].textContent = res.onboardCount;
+        el["enrolled-count"].textContent = res.enrolledCount;
+
+        renderCharts(res.stats);
+        renderOnboardingChart(res.chartData);
+      }
+
+      setSyncing(false);
+    }
+
+    async function loadFeedbackData() {
+      setSyncing(true);
+
+      const params = {
+        session: el["feed-session"].value,
+        rating: el["feed-rating"].value,
+        start: el["feed-start"].value,
+        end: el["feed-end"].value
+      };
+
+      const res = await apiGet("getFeedbackData", params);
+      const rows = (res && res.feedbacks ? res.feedbacks : []).map((r) => `
+        <tr>
+          <td>${escapeHtml(r.date)}</td>
+          <td>${escapeHtml(r.session)}</td>
+          <td><strong>${escapeHtml(r.name)}</strong></td>
+          <td>${escapeHtml(r.mobile)}</td>
+          <td>${makeBadge(`${r.rating} ★`, theme.orange)}</td>
+          <td>${escapeHtml(r.comment)}</td>
+        </tr>
+      `);
+
+      el["feed-body"].innerHTML = rowOrEmpty(rows, 6);
+      setSyncing(false);
+    }
+
+    function toggleDetails(rowId) {
+      const details = $("details-" + rowId);
+      const button = $("btn-" + rowId);
+
+      if (!details || !button) return;
+
+      const isHidden = details.style.display === "none" || details.style.display === "";
+      details.style.display = isHidden ? "table-row" : "none";
+      button.style.transform = isHidden ? "rotate(90deg)" : "rotate(0deg)";
+    }
+
+    async function loadTickets() {
+      setSyncing(true);
+
+      const list = await apiGet("getTickets");
+      const rows = (list && !list.error ? list : []).map((t) => {
+        const priorityColor =
+          t.priority === "High" || t.priority === "Urgent"
+            ? theme.danger
+            : t.priority === "Medium"
+            ? theme.warning
+            : theme.blue;
+
+        const statusColor =
+          t.status === "Solved"
+            ? theme.success
+            : t.status === "Escalated"
+            ? theme.warning
+            : theme.danger;
+
+        const tatHtml =
+          t.tat && t.tat !== "-" && t.tat !== "N/A"
+            ? `<span class="badge" style="background:#3d4466; font-size:11px;">${escapeHtml("⏱️ " + t.tat)}</span>`
+            : `<span style="color:#aaa; font-size:12px; font-weight:600;">Pending</span>`;
+
+        let issueRemark = t.remark || "-";
+        let resolutionRemark = "";
+
+        if (issueRemark.includes("[Res]:")) {
+          const parts = issueRemark.split("[Res]:");
+          issueRemark = parts[0].trim();
+          resolutionRemark = parts.slice(1).join("\nUpdate: ").trim();
+        }
+
+        const serializedTicket = encodeURIComponent(JSON.stringify(t));
+
+        return `
+          <tr class="main-row" style="cursor:pointer;" data-toggle-row="${t.row}">
+            <td style="text-align:center;">
+              <button id="btn-${t.row}" class="toggle-btn" style="pointer-events:none;">▶</button>
+            </td>
+            <td>${escapeHtml(t.dateRaised)}</td>
+            <td><strong>${escapeHtml(t.name)}</strong></td>
+            <td>${escapeHtml(t.course)}</td>
+            <td><strong>${escapeHtml(t.issue)}</strong></td>
+            <td>${makeBadge(t.status, statusColor)}</td>
+          </tr>
+
+          <tr id="details-${t.row}" style="display:none;">
+            <td colspan="6" style="padding:0; border-bottom:1px solid #eee;">
+              <div class="detail-row-content">
+                <div>
+                  <h4 style="margin:0 0 10px; font-size:13px; color:var(--secondary); text-transform:uppercase;">Details</h4>
+                  <p style="margin:5px 0; font-size:13px;"><strong>Phone:</strong> ${escapeHtml(t.phone)}</p>
+                  <p style="margin:5px 0; font-size:13px;"><strong>Source:</strong> ${escapeHtml(t.source)}</p>
+                  <p style="margin:5px 0; font-size:13px;"><strong>Assigned To:</strong> ${escapeHtml(t.assigned)}</p>
+                  <p style="margin:8px 0; font-size:13px;">
+                    <strong>Priority:</strong>
+                    <span class="badge" style="background:${priorityColor}; font-size:10px; padding:3px 8px;">${escapeHtml(t.priority)}</span>
+                  </p>
+                </div>
+
+                <div>
+                  <h4 style="margin:0 0 10px; font-size:13px; color:var(--secondary); text-transform:uppercase;">Timeline & Remarks</h4>
+                  <p style="margin:5px 0; font-size:13px;"><strong>TAT:</strong> ${tatHtml}</p>
+                  <p style="margin:5px 0; font-size:13px;"><strong>Resolved On:</strong> ${escapeHtml(t.dateResolved)}</p>
+                  <div style="margin-top:10px; padding:10px; background:#fff; border-radius:6px; border:1px solid #eee;">
+                    <strong style="font-size:12px; color:#888;">Issue:</strong>
+                    <p style="margin:5px 0 0; font-size:13px;">${escapeHtml(issueRemark)}</p>
+                    ${
+                      resolutionRemark
+                        ? `<div style="margin-top:12px; padding-top:10px; border-top:1px dashed #ddd;">
+                            <strong style="font-size:12px; color:#888;">Resolution:</strong>
+                            <p style="margin:5px 0 0; font-size:13px; color:${t.status === "Escalated" ? theme.warning : theme.success}; font-weight:600;">
+                              ${escapeHtml(resolutionRemark)}
+                            </p>
+                          </div>`
+                        : ""
+                    }
+                  </div>
+                </div>
+
+                <div style="border-left:1px solid #ddd; padding-left:20px; min-width:150px;">
+                  <h4 style="margin:0 0 10px; font-size:13px; color:var(--secondary); text-transform:uppercase;">Actions</h4>
+                  ${
+                    t.status === "Solved"
+                      ? `<div style="padding-top:10px;"><span style="color:${theme.success}; font-size:13px; font-weight:bold;">✔️ Closed</span></div>`
+                      : `<div style="display:flex; flex-direction:column; gap:8px;">
+                          <select data-status-row="${t.row}" style="padding:8px; font-size:12px; border:1px solid #ddd; border-radius:5px;">
+                            <option value="Untouched" ${t.status === "Untouched" ? "selected" : ""}>Untouched</option>
+                            <option value="Escalated" ${t.status === "Escalated" ? "selected" : ""}>Escalated</option>
+                            <option value="Solved" ${t.status === "Solved" ? "selected" : ""}>Solved</option>
+                          </select>
+                          <button class="edit-ticket-btn" data-ticket="${serializedTicket}" style="background:var(--primary); border:none; border-radius:5px; padding:8px; cursor:pointer; font-size:12px; font-weight:bold; color:white;">Edit Info</button>
+                        </div>`
+                  }
+                </div>
+              </div>
+            </td>
+          </tr>
+        `;
+      });
+
+      el["tick-body"].innerHTML = rowOrEmpty(rows, 6);
+      setSyncing(false);
+    }
+
+    async function handleStatusChange(row, status) {
+      let remark = "";
+
+      if (status === "Solved" || status === "Escalated") {
+        const { value } = await Swal.fire({
+          title: status === "Solved" ? "Resolution Remark" : "Escalation Reason",
+          input: "text",
+          showCancelButton: true,
+          confirmButtonColor: status === "Solved" ? theme.success : theme.warning
+        });
+
+        if (value) {
+          remark = value;
+        } else if (value === undefined) {
+          await loadTickets();
+          return;
+        }
+      }
+
+      setSyncing(true);
+      await apiPost("updateTicketStatus", { row, status, remark });
+      await loadTickets();
+      setSyncing(false);
+
+      Swal.fire({
+        icon: "success",
+        title: "Updated!",
+        showConfirmButton: false,
+        timer: 1500
+      });
+    }
+
+    // 🚀 PREMIUM "RAISE TICKET" MODAL
+    async function openTicketModal() {
+      const { value } = await Swal.fire({
+        title: "",
+        width: "550px",
+        showCancelButton: true,
+        confirmButtonText: "Submit Ticket",
+        cancelButtonText: "Cancel",
+        confirmButtonColor: theme.orange,
+        cancelButtonColor: "#aaa",
+        html: `
+          <div style="text-align: center; margin-bottom: 20px; padding-top: 10px;">
+            <h2 style="margin: 0; color: var(--secondary); font-size: 24px; font-weight: 800;">Raise a Support Ticket 🎫</h2>
+            <p style="color: #888; font-size: 14px; margin-top: 5px;">Fill out the form below and our team will get back to you.</p>
+          </div>
+          <div style="text-align: left;">
+            <div style="margin-bottom: 15px;">
+              <label style="display: block; margin-bottom: 5px; font-size: 13px; font-weight: 700; color: var(--secondary);">Full Name *</label>
+              <input id="s-n" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px; box-sizing:border-box; font-family: inherit;" placeholder="Enter your full name">
+            </div>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
+              <div>
+                <label style="display: block; margin-bottom: 5px; font-size: 13px; font-weight: 700; color: var(--secondary);">Phone Number *</label>
+                <input id="s-p" type="tel" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px; box-sizing:border-box; font-family: inherit;" placeholder="Mobile No.">
+              </div>
+              <div>
+                <label style="display: block; margin-bottom: 5px; font-size: 13px; font-weight: 700; color: var(--secondary);">Email Address</label>
+                <input id="s-e" type="email" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px; box-sizing:border-box; font-family: inherit;" placeholder="Email (Optional)">
+              </div>
+            </div>
+
+            <div style="margin-bottom: 15px;">
+              <label style="display: block; margin-bottom: 5px; font-size: 13px; font-weight: 700; color: var(--secondary);">Course Name</label>
+              <select id="s-c" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px; box-sizing:border-box; font-family: inherit;">
+                <option value="N/A" selected>Select Course...</option>
+                <option value="Fashion Designing">Fashion Designing</option>
+                <option value="Cosmetology">Cosmetology</option>
+                <option value="Mastery Program">Mastery Program</option>
+                <option value="Basic Program">Basic Program</option>
+                <option value="Activation Program">Activation Program</option>
+                <option value="NID Program">NID Program</option>
+              </select>
+            </div>
+
+            <div style="margin-bottom: 15px;">
+              <label style="display: block; margin-bottom: 5px; font-size: 13px; font-weight: 700; color: var(--secondary);">Issue Type *</label>
+              <select id="s-i" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px; box-sizing:border-box; font-family: inherit;">
+                <option value="" disabled selected>What do you need help with?</option>
+                <option value="NSDC">NSDC</option>
+                <option value="KIT">KIT</option>
+                <option value="Finance">Finance</option>
+                <option value="Training">Training</option>
+                <option value="Onboarding">Onboarding</option>
+                <option value="Cancellation">Cancellation</option>
+                <option value="Exam">Exam</option>
+                <option value="Certificate">Certificate</option>
+                <option value="Portfolio">Portfolio</option>
+                <option value="Extension">Extension</option>
+              </select>
+            </div>
+
+            <div style="margin-bottom: 10px;">
+              <label style="display: block; margin-bottom: 5px; font-size: 13px; font-weight: 700; color: var(--secondary);">Description / Remark</label>
+              <textarea id="s-r" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px; box-sizing:border-box; font-family: inherit; min-height: 80px; resize: vertical;" placeholder="Please describe your issue in detail..."></textarea>
+            </div>
+          </div>
+        `,
+        preConfirm: () => {
+          const name = $("s-n").value.trim();
+          const phone = $("s-p").value.trim();
+          const email = $("s-e").value.trim();
+          const course = $("s-c").value;
+          const issue = $("s-i").value;
+          const remark = $("s-r").value.trim();
+
+          if (!name || !phone || !issue) {
+            Swal.showValidationMessage("Name, Phone & Issue Type are required!");
+            return false;
+          }
+
+          return {
+            name,
+            phone,
+            email: email || "-",
+            course,
+            issue,
+            remark: remark || "-",
+            source: "Dashboard",
+            assigned: "Unassigned",
+            priority: "Medium"
+          };
+        }
+      });
+
+      if (!value) return;
+
+      setSyncing(true);
+      await apiPost("saveTicket", value);
+      await loadTickets();
+      setSyncing(false);
+
+      Swal.fire({
+        icon: "success",
+        title: "Ticket Created!",
+        text: "Our team will look into it.",
+        confirmButtonColor: theme.orange,
+        timer: 2000
+      });
+    }
+
+    async function openEditModal(ticket) {
+      const { value } = await Swal.fire({
+        title: "Edit Ticket",
+        html: `
+          <select id="e-p" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px;">
+            <option value="Urgent" ${ticket.priority === "Urgent" ? "selected" : ""}>Urgent</option>
+            <option value="High" ${ticket.priority === "High" ? "selected" : ""}>High</option>
+            <option value="Medium" ${ticket.priority === "Medium" ? "selected" : ""}>Medium</option>
+            <option value="Low" ${ticket.priority === "Low" ? "selected" : ""}>Low</option>
+          </select>
+        `,
+        preConfirm: () => ({ priority: $("e-p").value })
+      });
+
+      if (!value) return;
+
+      setSyncing(true);
+      await apiPost("editTicketDetails", { row: ticket.row, info: value });
+      await loadTickets();
+      setSyncing(false);
+    }
+
+    async function loadOnboardTable() {
+      setSyncing(true);
+
+      const list = await apiGet("getOnboardingTable");
+      const rows = (list && !list.error ? list : []).map((r) => `
+        <tr>
+          <td><strong>${escapeHtml(r.name)}</strong></td>
+          <td>${escapeHtml(r.phone)}</td>
+          <td>${escapeHtml(r.email)}</td>
+          <td>${makeBadge(r.program, theme.blue)}</td>
+          <td>${escapeHtml(r.source)}</td>
+        </tr>
+      `);
+
+      el["onboard-body"].innerHTML = rowOrEmpty(rows, 5);
+      setSyncing(false);
+    }
+
+    async function openEnrollModal() {
+      const { value } = await Swal.fire({
+        title: "New Enrollment",
+        showCancelButton: true,
+        confirmButtonColor: theme.orange,
+        cancelButtonColor: "#aaa",
+        confirmButtonText: "Save Data",
+        html: `
+          <div style="text-align:left; margin-top:15px;">
+            <div style="margin-bottom:15px;">
+              <label style="font-size:13px; font-weight:600; color:var(--secondary);">Course Name *</label>
+              <select id="en-c" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px; margin-top:5px;">
+                <option value="" disabled selected>Select Course...</option>
+                <option value="Activation">Activation</option>
+                <option value="Fashion Designing">Fashion Designing</option>
+                <option value="Cosmetology">Cosmetology</option>
+                <option value="Others">Others</option>
+              </select>
+            </div>
+            <div style="margin-bottom:15px;">
+              <label style="font-size:13px; font-weight:600; color:var(--secondary);">Enrollment Count *</label>
+              <input type="number" id="en-count" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px; margin-top:5px;" placeholder="Number of enrollments">
+            </div>
+            <div>
+              <label style="font-size:13px; font-weight:600; color:var(--secondary);">Onboarded By *</label>
+              <select id="en-by" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px; margin-top:5px;">
+                <option value="Kumud">Kumud</option>
+                <option value="Sanskriti">Sanskriti</option>
+                <option value="Dhananjaya">Dhananjaya</option>
+                <option value="Web">Web (Form)</option>
+              </select>
+            </div>
+          </div>
+        `,
+        preConfirm: () => {
+          const course = $("en-c").value;
+          const count = $("en-count").value;
+          const by = $("en-by").value;
+
+          if (!course || !count) {
+            Swal.showValidationMessage("Please fill all fields");
+            return false;
+          }
+
+          const now = new Date();
+          const month = now.toLocaleString("default", { month: "short" }) + "-" + now.getFullYear();
+
+          return { course, month, count, by };
+        }
+      });
+
+      if (!value) return;
+
+      setSyncing(true);
+      await apiPost("saveEnrollmentData", value);
+      await loadEnrollData();
+      setSyncing(false);
+
+      Swal.fire({ icon: "success", title: "Saved!", showConfirmButton: false, timer: 1500 });
+    }
+
+    async function loadEnrollData() {
+      setSyncing(true);
+
+      const list = await apiGet("getEnrollmentData");
+      const rows = (list && !list.error ? list : []).map((r) => `
+        <tr>
+          <td>${escapeHtml(r.date)}</td>
+          <td><strong>${escapeHtml(r.course)}</strong></td>
+          <td>${makeBadge(r.count, theme.blue)}</td>
+          <td>${escapeHtml(r.by)}</td>
+        </tr>
+      `);
+
+      el["enroll-body"].innerHTML = rowOrEmpty(rows, 4);
+      setSyncing(false);
+    }
+
+    async function openNsdcModal(type) {
+      const { value } = await Swal.fire({
+        title: type,
+        showCancelButton: true,
+        confirmButtonColor: type === "Enrollment" ? theme.blue : theme.success,
+        cancelButtonColor: "#aaa",
+        confirmButtonText: "Save Data",
+        html: `
+          <div style="text-align:left; margin-top:15px;">
+            <div style="margin-bottom:15px;">
+              <label style="font-size:13px; font-weight:600; color:var(--secondary);">Batch Number *</label>
+              <input id="n-b" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px; margin-top:5px;" placeholder="Enter Batch No.">
+            </div>
+            <div>
+              <label style="font-size:13px; font-weight:600; color:var(--secondary);">Count *</label>
+              <input type="number" id="n-c" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px; margin-top:5px;" placeholder="Enter Count">
+            </div>
+          </div>
+        `,
+        preConfirm: () => {
+          const batch = $("n-b").value.trim();
+          const count = $("n-c").value;
+
+          if (!batch || !count) {
+            Swal.showValidationMessage("Please fill all fields");
+            return false;
+          }
+
+          return { type, batch, count };
+        }
+      });
+
+      if (!value) return;
+
+      setSyncing(true);
+      await apiPost("saveNsdcData", value);
+      await loadNsdcData();
+      setSyncing(false);
+
+      Swal.fire({ icon: "success", title: "Saved!", showConfirmButton: false, timer: 1500 });
+    }
+
+    async function loadNsdcData() {
+      setSyncing(true);
+
+      const list = await apiGet("getNsdcData");
+      const rows = (list && !list.error ? list : []).map((r) => `
+        <tr>
+          <td>${escapeHtml(r.date)}</td>
+          <td><strong>${escapeHtml(r.type)}</strong></td>
+          <td>${escapeHtml(r.batch)}</td>
+          <td>${makeBadge(r.count, theme.blue)}</td>
+        </tr>
+      `);
+
+      el["nsdc-body"].innerHTML = rowOrEmpty(rows, 4);
+      setSyncing(false);
+    }
+
+    async function loadTasks() {
+      setSyncing(true);
+
+      const list = await apiGet("getTasks");
+      const rows = (list && !list.error ? list : []).map((t) => `
+        <tr>
+          <td>${escapeHtml(t.date)}</td>
+          <td><strong>${escapeHtml(t.task)}</strong></td>
+          <td>${escapeHtml(t.executive)}</td>
+          <td>${makeBadge(t.status, t.status === "Done" ? theme.success : theme.danger)}</td>
+          <td>
+            ${
+              t.status === "Done"
+                ? "✔️"
+                : `<select data-task-row="${t.row}">
+                    <option value="Pending" ${t.status === "Pending" ? "selected" : ""}>Pending</option>
+                    <option value="Done" ${t.status === "Done" ? "selected" : ""}>Done</option>
+                  </select>`
+            }
+          </td>
+        </tr>
+      `);
+
+      el["tasks-body"].innerHTML = rowOrEmpty(rows, 5);
+      setSyncing(false);
+    }
+
+    async function submitTask() {
+      const task = el["task-name"].value.trim();
+      if (!task) return;
+
+      setSyncing(true);
+      await apiPost("saveTask", {
+        task,
+        exec: el["task-exec"].value,
+        status: el["task-status"].value
+      });
+
+      el["task-name"].value = "";
+      await loadTasks();
+      setSyncing(false);
+    }
+
+    async function updateTask(row, status) {
+      setSyncing(true);
+      await apiPost("updateTaskStatusRow", { row, status });
+      await loadTasks();
+      setSyncing(false);
+    }
+
+    async function loadReportsData() {
+      setSyncing(true);
+
+      const params = {
+        session: el["rep-session"].value,
+        groupBy: el["rep-group"].value,
+        start: el["rep-start"].value,
+        end: el["rep-end"].value
+      };
+
+      const res = await apiGet("getReportsData", params);
+
+      if (res && !res.error) {
+        const npsRows = res.npsReport.map((r) => `
+          <tr>
+            <td><strong>${escapeHtml(r.key)}</strong></td>
+            <td>${escapeHtml(r.total)}</td>
+            <td>${makeBadge(r.nps, r.nps >= 50 ? theme.success : r.nps > 0 ? theme.warning : theme.danger)}</td>
+          </tr>
+        `);
+
+        const trainerRows = res.trainerReport.map((r) => `
+          <tr>
+            <td><strong>${escapeHtml(r.key)}</strong></td>
+            <td>${escapeHtml(r.total)}</td>
+            <td>${makeBadge(r.nps, r.nps >= 50 ? theme.success : r.nps > 0 ? theme.warning : theme.danger)}</td>
+          </tr>
+        `);
+
+        const opsRows = res.opsReport.map((r) => `
+          <tr>
+            <td><strong>${escapeHtml(r.key)}</strong></td>
+            <td>${escapeHtml(r.tasks || 0)}</td>
+            <td>${escapeHtml(r.onboard || 0)}</td>
+            <td>${escapeHtml(r.nsdc || 0)}</td>
+          </tr>
+        `);
+
+        el["rep-nps-body"].innerHTML = rowOrEmpty(npsRows, 3);
+        el["rep-trainer-body"].innerHTML = rowOrEmpty(trainerRows, 3, "No Data Found / Trainer Column Missing");
+        el["rep-ops-body"].innerHTML = rowOrEmpty(opsRows, 4);
+      }
+
+      setSyncing(false);
+    }
+
+    function switchView(view) {
+      const config = viewConfig[view];
+      if (!config) return;
+
+      $$('[id^="view-"]').forEach((node) => node.classList.add("hidden"));
+      $$(".sidebar li").forEach((node) => node.classList.remove("active"));
+
+      $("view-" + view).classList.remove("hidden");
+
+      const activeTab = $("m-" + view);
+      if (activeTab) activeTab.classList.add("active");
+
+      el["page-title"].textContent = config.title;
+      el["mobile-view-select"].value = view;
+      config.loader();
+    }
+
+    function initDefaultDates() {
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = String(now.getMonth() + 1).padStart(2, "0");
+      const lastDay = String(new Date(year, now.getMonth() + 1, 0).getDate()).padStart(2, "0");
+
+      const start = `${year}-${month}-01`;
+      const end = `${year}-${month}-${lastDay}`;
+
+      el["dash-start"].value = start;
+      el["dash-end"].value = end;
+      el["feed-start"].value = start;
+      el["feed-end"].value = end;
+      el["rep-start"].value = start;
+      el["rep-end"].value = end;
+    }
+
+    async function initSessions() {
+      const list = await apiGet("getSessions");
+      if (!list || list.error) return;
+
+      $$(".session-sel").forEach((select) => {
+        const existing = new Set(Array.from(select.options).map((option) => option.value));
+
+        list.forEach((name) => {
+          if (existing.has(name)) return;
+
+          const option = document.createElement("option");
+          option.value = name;
+          option.textContent = name;
+          select.appendChild(option);
+        });
+      });
+    }
+
+    function bindEvents() {
+      $$(".sidebar li[data-view]").forEach((item) => {
+        item.addEventListener("click", () => switchView(item.dataset.view));
+      });
+
+      el["mobile-view-select"].addEventListener("change", (event) => {
+        switchView(event.target.value);
+      });
+
+      $("dash-apply").addEventListener("click", loadDashboardData);
+      $("feed-apply").addEventListener("click", loadFeedbackData);
+      $("rep-apply").addEventListener("click", loadReportsData);
+      $("raise-ticket-btn").addEventListener("click", openTicketModal);
+      $("open-enroll-btn").addEventListener("click", openEnrollModal);
+      $("add-task-btn").addEventListener("click", submitTask);
+
+      $$("[data-nsdc-type]").forEach((button) => {
+        button.addEventListener("click", () => openNsdcModal(button.dataset.nsdcType));
+      });
+
+      el["tick-body"].addEventListener("click", (event) => {
+        const toggleRow = event.target.closest("[data-toggle-row]");
+        if (toggleRow) {
+          toggleDetails(toggleRow.dataset.toggleRow);
+          return;
+        }
+
+        const editButton = event.target.closest(".edit-ticket-btn");
+        if (editButton) {
+          const ticket = JSON.parse(decodeURIComponent(editButton.dataset.ticket));
+          openEditModal(ticket);
+        }
+      });
+
+      el["tick-body"].addEventListener("change", (event) => {
+        const select = event.target.closest("[data-status-row]");
+        if (select) {
+          handleStatusChange(select.dataset.statusRow, select.value);
+        }
+      });
+
+      el["tasks-body"].addEventListener("change", (event) => {
+        const select = event.target.closest("[data-task-row]");
+        if (select) {
+          updateTask(select.dataset.taskRow, select.value);
+        }
+      });
+    }
+
+    async function init() {
+      cacheElements();
+      bindEvents();
+      initDefaultDates();
+
+      if (window.Chart && window.ChartDataLabels) {
+        Chart.register(ChartDataLabels);
+      }
+
+      await initSessions();
+      await loadDashboardData();
+    }
+
+    window.addEventListener("load", init);
+  </script>
 </body>
 </html>
