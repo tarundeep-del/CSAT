@@ -1246,18 +1246,42 @@
       });
     }
 
+    // 🚀 PREMIUM "EDIT TICKET" MODAL (With Assign To Feature)
     async function openEditModal(ticket) {
       const { value } = await Swal.fire({
-        title: "Edit Ticket",
+        title: "Edit Ticket Details",
+        showCancelButton: true,
+        confirmButtonColor: theme.orange,
+        cancelButtonColor: "#aaa",
+        confirmButtonText: "Save Changes",
         html: `
-          <select id="e-p" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px;">
-            <option value="Urgent" ${ticket.priority === "Urgent" ? "selected" : ""}>Urgent</option>
-            <option value="High" ${ticket.priority === "High" ? "selected" : ""}>High</option>
-            <option value="Medium" ${ticket.priority === "Medium" ? "selected" : ""}>Medium</option>
-            <option value="Low" ${ticket.priority === "Low" ? "selected" : ""}>Low</option>
-          </select>
+          <div style="text-align: left; margin-top: 15px;">
+            <div style="margin-bottom: 15px;">
+              <label style="font-size: 13px; font-weight: 600; color: var(--secondary);">Assign To</label>
+              <select id="e-a" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px; margin-top: 5px;">
+                <option value="Unassigned" ${ticket.assigned === "Unassigned" ? "selected" : ""}>Unassigned</option>
+                <option value="Kumud" ${ticket.assigned === "Kumud" ? "selected" : ""}>Kumud</option>
+                <option value="Sanskriti" ${ticket.assigned === "Sanskriti" ? "selected" : ""}>Sanskriti</option>
+                <option value="Dhananjaya" ${ticket.assigned === "Dhananjaya" ? "selected" : ""}>Dhananjaya</option>
+              </select>
+            </div>
+            <div>
+              <label style="font-size: 13px; font-weight: 600; color: var(--secondary);">Priority</label>
+              <select id="e-p" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px; margin-top: 5px;">
+                <option value="Urgent" ${ticket.priority === "Urgent" ? "selected" : ""}>Urgent</option>
+                <option value="High" ${ticket.priority === "High" ? "selected" : ""}>High</option>
+                <option value="Medium" ${ticket.priority === "Medium" ? "selected" : ""}>Medium</option>
+                <option value="Low" ${ticket.priority === "Low" ? "selected" : ""}>Low</option>
+              </select>
+            </div>
+          </div>
         `,
-        preConfirm: () => ({ priority: $("e-p").value })
+        preConfirm: () => ({ 
+          assigned: $("e-a").value,
+          priority: $("e-p").value,
+          course: ticket.course, // 🛡️ Preserve old data
+          source: ticket.source  // 🛡️ Preserve old data
+        })
       });
 
       if (!value) return;
@@ -1266,6 +1290,8 @@
       await apiPost("editTicketDetails", { row: ticket.row, info: value });
       await loadTickets();
       setSyncing(false);
+      
+      Swal.fire({ icon: "success", title: "Saved!", showConfirmButton: false, timer: 1500 });
     }
 
     async function loadOnboardTable() {
