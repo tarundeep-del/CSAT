@@ -148,469 +148,282 @@
 </div>
 
 <script>
-  Chart.register(ChartDataLabels);
+  Chart.register(ChartDataLabels); let gChart, dChart, oChart; 
+  const theme = { orange: '#ff7b2c', navy: '#1f2235', blue: '#3498db', light: '#f0f2f5', purple: '#9b59b6' };
 
-  const API_URL = "https://script.google.com/macros/s/AKfycbzZvoyP-WOdDdUFmktk3XS79mIOkq7sWjAcBBXWthAQBwHmMBJRP33PUE_qkusfqxWb/exec";
+  const API_URL = "https://script.google.com/macros/s/AKfycbzZvoyP-WOdDdUFmktk3XS79mIOkq7sWjAcBBXWthAQBwHmMBJRP33PUE_qkusfqxWb/exec"; 
 
-  const theme = {
-    orange: "#ff7b2c",
-    navy: "#1f2235",
-    blue: "#3498db",
-    light: "#f0f2f5",
-    purple: "#9b59b6",
-    success: "#2ecc71",
-    danger: "#e74c3c",
-    warning: "#f39c12"
-  };
-
-  const $ = (id) => document.getElementById(id);
-  const $$ = (selector) => Array.from(document.querySelectorAll(selector));
-
-  const els = {
-    pageTitle: $("page-title"),
-    total: $("total"),
-    untouched: $("untouched-count"),
-    solved: $("solved-count"),
-    onboard: $("onboard-count"),
-    enrolled: $("enrolled-count"),
-    feedBody: $("feed-body"),
-    tickBody: $("tick-body"),
-    onboardBody: $("onboard-body"),
-    enrollBody: $("enroll-body"),
-    nsdcBody: $("nsdc-body"),
-    tasksBody: $("tasks-body"),
-    repNpsBody: $("rep-nps-body"),
-    repTrainerBody: $("rep-trainer-body"),
-    repOpsBody: $("rep-ops-body")
-  };
-
-  const views = {
-    dash: { title: "DASHBOARD", load: loadDashboardData },
-    feed: { title: "FEEDBACK", load: loadFeedbackData },
-    tick: { title: "TICKETING", load: loadTickets },
-    onboard: { title: "ONBOARDING", load: loadOnboardTable },
-    enroll: { title: "ONBOARDING DATA", load: loadEnrollData },
-    nsdc: { title: "NSDC / CERTIFICATE", load: loadNsdcData },
-    tasks: { title: "DAILY TASKS", load: loadTasks },
-    report: { title: "ANALYTICS REPORTS", load: loadReportsData }
-  };
-
-  const syncTargets = $$(".card, .content-section, .table-wrapper");
-  const sessionSelects = $$(".session-sel");
-
-  let charts = {
-    gauge: null,
-    dist: null,
-    onboarding: null
-  };
-
-  function setSyncing(active) {
-    syncTargets.forEach((el) => el.classList.toggle("syncing", active));
+  async function apiGet(action, params = {}) {
+    try {
+      let url = new URL(API_URL);
+      url.searchParams.append('action', action);
+      for (const k in params) url.searchParams.append(k, params[k]);
+      let res = await fetch(url, { method: 'GET', redirect: "follow", credentials: "omit" });
+      return await res.json();
+    } catch (e) { console.error("API GET Error:", e); return { error: e }; }
   }
 
-  async function request(method, action, payload = {}) {
+  async function apiPost(action, dataObj = {}) {
     try {
-      const url = new URL(API_URL);
-
-      if (method === "GET") {
-        url.searchParams.set("action", action);
-        Object.entries(payload).forEach(([key, value]) => url.searchParams.set(key, value ?? ""));
-      }
-
-      const res = await fetch(method === "GET" ? url : API_URL, {
-        method,
-        headers: method === "POST" ? { "Content-Type": "text/plain;charset=utf-8" } : undefined,
-        body: method === "POST" ? JSON.stringify({ action, data: payload }) : undefined,
+      let res = await fetch(API_URL, { 
+        method: 'POST', 
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' }, 
+        body: JSON.stringify({ action: action, data: dataObj }), 
         redirect: "follow",
         credentials: "omit"
       });
-
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
       return await res.json();
-    } catch (error) {
-      console.error(`${method} ${action} failed:`, error);
-      return { error: error.message || String(error) };
-    }
+    } catch (e) { console.error("API POST Error:", e); return { error: e }; }
   }
 
-  const apiGet = (action, params) => request("GET", action, params);
-  const apiPost = (action, data) => request("POST", action, data);
+  function setSyncing(isSyncing) { document.querySelectorAll('.card, .content-section, .table-wrapper').forEach(el => isSyncing ? el.classList.add('syncing') : el.classList.remove('syncing')); }
 
-  function escapeHtml(value = "") {
-    return String(value).replace(/[&<>"']/g, (char) => ({
-      "&": "&amp;",
-      "<": "&lt;",
-      ">": "&gt;",
-      '"': "&quot;",
-      "'": "&#39;"
-    }[char]));
+  function renderCharts(s) {
+    if(gChart) gChart.destroy(); if(dChart) dChart.destroy();
+    const centerPlugin = { id: 'centerPlugin', afterDraw(chart) { const {ctx, chartArea: {top, bottom, left, right, height}} = chart; ctx.save(); const centerX = (left + right)/2; const centerY = (top + bottom)/2; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.font = `bold ${(height / 3).toFixed(0)}px Segoe UI`; ctx.fillStyle = '#000000'; ctx.fillText(s.nps, centerX, centerY + (height / 8)); ctx.font = `600 ${(height / 8).toFixed(0)}px Segoe UI`; ctx.fillStyle = '#888888'; ctx.fillText("CSAT", centerX, centerY + (height / 3.2)); ctx.restore(); } };
+    gChart = new Chart(document.getElementById("gaugeChart"), { type: 'doughnut', data: { datasets: [{ data: [s.nps+100, 200-(s.nps+100)], backgroundColor: [theme.orange, theme.light], borderWidth: 0, cutout: '82%' }] }, options: { responsive: true, maintainAspectRatio: false, rotation: -90, circumference: 180, plugins: { legend: { display: false }, datalabels: { display: false } } }, plugins: [centerPlugin] });
+    dChart = new Chart(document.getElementById("distChart"), { type: 'pie', data: { labels: [`Promoters: ${s.promoters}`, `Passives: ${s.passives}`, `Detractors: ${s.detractors}`], datasets: [{ data: [s.promoters, s.passives, s.detractors], backgroundColor: [theme.orange, '#cbd5e1', theme.navy] }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { boxWidth: 12, font: { size: 13, weight: 'bold' } } }, datalabels: { display: false } } } });
   }
 
-  function badge(text, color) {
-    return `<span class="badge" style="background:${color}">${escapeHtml(text)}</span>`;
+  function renderOnboardingChart(chartData) {
+    if(oChart) oChart.destroy();
+    if (!chartData || chartData.labels.length === 0) { const ctx = document.getElementById("onboardingChart").getContext("2d"); ctx.font = "14px Segoe UI"; ctx.fillStyle = "#888"; ctx.textAlign = "center"; ctx.fillText("No Enrollment Data Available", 250, 100); return; }
+    oChart = new Chart(document.getElementById("onboardingChart"), { type: 'line', data: { labels: chartData.labels, datasets: [{ label: 'Enrollments', data: chartData.data, borderColor: theme.blue, backgroundColor: 'rgba(52, 152, 219, 0.2)', borderWidth: 2, fill: true, tension: 0.3, pointBackgroundColor: theme.blue, pointRadius: 4 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, datalabels: { display: true, align: 'top', color: theme.navy, font: { weight: 'bold', size: 11 } } }, scales: { y: { beginAtZero: true, grid: { color: '#eee' }, ticks: { stepSize: 1 } }, x: { grid: { display: false } } } } });
   }
 
-  function switchView(viewKey) {
-    $$('[id^="view-"]').forEach((el) => el.classList.add("hidden"));
-    $$(".sidebar li").forEach((el) => el.classList.remove("active"));
-
-    const view = views[viewKey];
-    if (!view) return;
-
-    $("view-" + viewKey).classList.remove("hidden");
-    $("m-" + viewKey)?.classList.add("active");
-    els.pageTitle.textContent = view.title;
-    view.load();
-  }
-
-  function updateGaugeChart(stats) {
-    const centerPlugin = {
-      id: "centerPlugin",
-      afterDraw(chart) {
-        const { ctx, chartArea } = chart;
-        const { top, bottom, left, right, height } = chartArea;
-        const centerX = (left + right) / 2;
-        const centerY = (top + bottom) / 2;
-
-        ctx.save();
-        ctx.textAlign = "center";
-        ctx.textBaseline = "middle";
-        ctx.font = `bold ${(height / 3).toFixed(0)}px Segoe UI`;
-        ctx.fillStyle = "#000";
-        ctx.fillText(stats.nps, centerX, centerY + (height / 8));
-        ctx.font = `600 ${(height / 8).toFixed(0)}px Segoe UI`;
-        ctx.fillStyle = "#888";
-        ctx.fillText("CSAT", centerX, centerY + (height / 3.2));
-        ctx.restore();
-      }
-    };
-
-    const config = {
-      type: "doughnut",
-      data: {
-        datasets: [{
-          data: [stats.nps + 100, 200 - (stats.nps + 100)],
-          backgroundColor: [theme.orange, theme.light],
-          borderWidth: 0,
-          cutout: "82%"
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        rotation: -90,
-        circumference: 180,
-        plugins: {
-          legend: { display: false },
-          datalabels: { display: false }
-        }
-      },
-      plugins: [centerPlugin]
-    };
-
-    if (charts.gauge) charts.gauge.destroy();
-    charts.gauge = new Chart($("gaugeChart"), config);
-  }
-
-  function updateDistChart(stats) {
-    const config = {
-      type: "pie",
-      data: {
-        labels: [
-          `Promoters: ${stats.promoters}`,
-          `Passives: ${stats.passives}`,
-          `Detractors: ${stats.detractors}`
-        ],
-        datasets: [{
-          data: [stats.promoters, stats.passives, stats.detractors],
-          backgroundColor: [theme.orange, "#cbd5e1", theme.navy]
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: {
-            position: "right",
-            labels: { boxWidth: 12, font: { size: 13, weight: "bold" } }
-          },
-          datalabels: { display: false }
-        }
-      }
-    };
-
-    if (charts.dist) charts.dist.destroy();
-    charts.dist = new Chart($("distChart"), config);
-  }
-
-  function updateOnboardingChart(chartData) {
-    if (charts.onboarding) charts.onboarding.destroy();
-
-    if (!chartData?.labels?.length) {
-      const canvas = $("onboardingChart");
-      const ctx = canvas.getContext("2d");
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.font = "14px Segoe UI";
-      ctx.fillStyle = "#888";
-      ctx.textAlign = "center";
-      ctx.fillText("No Enrollment Data Available", canvas.width / 2, 100);
-      return;
-    }
-
-    charts.onboarding = new Chart($("onboardingChart"), {
-      type: "line",
-      data: {
-        labels: chartData.labels,
-        datasets: [{
-          label: "Enrollments",
-          data: chartData.data,
-          borderColor: theme.blue,
-          backgroundColor: "rgba(52, 152, 219, 0.2)",
-          borderWidth: 2,
-          fill: true,
-          tension: 0.3,
-          pointBackgroundColor: theme.blue,
-          pointRadius: 4
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: { display: false },
-          datalabels: {
-            display: true,
-            align: "top",
-            color: theme.navy,
-            font: { weight: "bold", size: 11 }
-          }
-        },
-        scales: {
-          y: { beginAtZero: true, ticks: { stepSize: 1 }, grid: { color: "#eee" } },
-          x: { grid: { display: false } }
-        }
-      }
-    });
+  function switchView(v) {
+    document.querySelectorAll('[id^="view-"]').forEach(el => el.classList.add('hidden')); document.getElementById('view-' + v).classList.remove('hidden');
+    document.querySelectorAll('.sidebar li').forEach(el => el.classList.remove('active')); 
+    let activeTab = document.getElementById('m-' + v); if(activeTab) activeTab.classList.add('active');
+    
+    let titleText = v.toUpperCase(); 
+    if (v === 'dash') titleText = 'DASHBOARD'; 
+    if (v === 'tick') titleText = 'TICKETING'; 
+    if (v === 'enroll') titleText = 'ONBOARDING DATA'; 
+    if (v === 'nsdc') titleText = 'NSDC / CERTIFICATE'; 
+    if (v === 'tasks') titleText = 'DAILY TASKS'; 
+    if (v === 'report') titleText = 'ANALYTICS REPORTS';
+    document.getElementById('page-title').innerText = titleText;
+    
+    if(v === 'dash') loadDashboardData(); if(v === 'feed') loadFeedbackData(); if(v === 'tick') loadTickets(); if(v === 'onboard') loadOnboardTable(); if(v === 'enroll') loadEnrollData(); if(v === 'nsdc') loadNsdcData(); if(v === 'tasks') loadTasks(); if(v === 'report') loadReportsData();
   }
 
   async function loadDashboardData() {
     setSyncing(true);
-    const res = await apiGet("getDashboardData", {
-      session: $("dash-session").value,
-      rating: $("dash-rating").value,
-      start: $("dash-start").value,
-      end: $("dash-end").value
-    });
-
-    if (!res?.error) {
-      els.total.textContent = res.stats.total;
-      els.untouched.textContent = res.untouched;
-      els.solved.textContent = res.solved;
-      els.onboard.textContent = res.onboardCount;
-      els.enrolled.textContent = res.enrolledCount;
-      updateGaugeChart(res.stats);
-      updateDistChart(res.stats);
-      updateOnboardingChart(res.chartData);
+    let p = { session: document.getElementById("dash-session").value, rating: document.getElementById("dash-rating").value, start: document.getElementById("dash-start").value, end: document.getElementById("dash-end").value };
+    let res = await apiGet('getDashboardData', p);
+    if(res && !res.error) {
+      document.getElementById("total").innerText = res.stats.total; renderCharts(res.stats);
+      document.getElementById("untouched-count").innerText = res.untouched; document.getElementById("solved-count").innerText = res.solved;
+      document.getElementById("onboard-count").innerText = res.onboardCount; document.getElementById("enrolled-count").innerText = res.enrolledCount;
+      renderOnboardingChart(res.chartData);
     }
-
     setSyncing(false);
   }
 
   async function loadFeedbackData() {
     setSyncing(true);
-    const res = await apiGet("getFeedbackData", {
-      session: $("feed-session").value,
-      rating: $("feed-rating").value,
-      start: $("feed-start").value,
-      end: $("dash-end-feed").value
+    let p = { session: document.getElementById("feed-session").value, rating: document.getElementById("feed-rating").value, start: document.getElementById("feed-start").value, end: document.getElementById("dash-end-feed").value };
+    let res = await apiGet('getFeedbackData', p);
+    if(res && res.feedbacks) { document.getElementById("feed-body").innerHTML = res.feedbacks.map(r => `<tr><td>${r.date}</td><td>${r.session}</td><td><strong>${r.name}</strong></td><td>${r.mobile}</td><td><span class="badge" style="background:${theme.orange}">${r.rating} ★</span></td><td>${r.comment}</td></tr>`).join(''); }
+    setSyncing(false);
+  }
+
+  function toggleDetails(rId) { let d = document.getElementById('details-'+rId), b = document.getElementById('btn-'+rId); if(d.style.display==='none'){ d.style.display='table-row'; b.style.transform='rotate(90deg)';} else { d.style.display='none'; b.style.transform='rotate(0deg)'; } }
+
+  async function loadTickets() {
+    setSyncing(true);
+    let list = await apiGet('getTickets');
+    if(list && !list.error) {
+      document.getElementById("tick-body").innerHTML = list.map(t => {
+        let pC = (t.priority === 'High' || t.priority === 'Urgent') ? '#e74c3c' : (t.priority === 'Medium' ? '#f39c12' : '#3498db'); let sC = t.status === 'Solved' ? '#2ecc71' : (t.status === 'Escalated' ? '#f39c12' : '#e74c3c');
+        let tH = (t.tat !== "-" && t.tat !== "" && t.tat !== "N/A") ? `<span class="badge" style="background:#3d4466; font-size:11px;">⏱️ ${t.tat}</span>` : `<span style="color:#aaa; font-size:12px; font-weight:600;">Pending</span>`;
+        let sD = JSON.stringify(t).replace(/'/g, "&apos;").replace(/"/g, '&quot;');
+        let iRem = t.remark || "-", rRem = ""; if (iRem.includes("[Res]:")) { let pts = iRem.split("[Res]:"); iRem = pts[0].trim(); rRem = pts.slice(1).join("\\nUpdate: ").trim(); }
+        return `<tr class="main-row" style="cursor: pointer;" onclick="toggleDetails(${t.row})"> <td style="text-align:center;"><button id="btn-${t.row}" class="toggle-btn" style="pointer-events:none;">▶</button></td> <td>${t.dateRaised}</td> <td><strong>${t.name}</strong></td> <td>${t.course}</td> <td><strong>${t.issue}</strong></td> <td><span class="badge" style="background:${sC}">${t.status}</span></td> </tr> <tr id="details-${t.row}" style="display:none;"> <td colspan="6" style="padding:0; border-bottom:1px solid #eee;"> <div class="detail-row-content"> <div> <h4 style="margin:0 0 10px 0; font-size:13px; color:var(--secondary); text-transform:uppercase;">Details</h4> <p style="margin:5px 0; font-size:13px;"><strong>Phone:</strong> ${t.phone}</p> <p style="margin:5px 0; font-size:13px;"><strong>Source:</strong> ${t.source}</p> <p style="margin:5px 0; font-size:13px;"><strong>Assigned To:</strong> ${t.assigned}</p> <p style="margin:8px 0; font-size:13px;"><strong>Priority:</strong> <span class="badge" style="background:${pC}; font-size:10px; padding:3px 8px;">${t.priority}</span></p> </div> <div> <h4 style="margin:0 0 10px 0; font-size:13px; color:var(--secondary); text-transform:uppercase;">Timeline & Remarks</h4> <p style="margin:5px 0; font-size:13px;"><strong>TAT:</strong> ${tH}</p> <p style="margin:5px 0; font-size:13px;"><strong>Resolved On:</strong> ${t.dateResolved}</p> <div style="margin-top:10px; padding:10px; background:#fff; border-radius:6px; border:1px solid #eee;"> <strong style="font-size:12px; color:#888;">Issue:</strong> <p style="margin:5px 0 0 0; font-size:13px;">${iRem}</p> ${rRem ? `<div style="margin-top: 12px; padding-top: 10px; border-top: 1px dashed #ddd;"><strong style="font-size:12px; color:#888;">Resolution:</strong><p style="margin:5px 0 0 0; font-size:13px; color:${t.status==='Escalated'?'#f39c12':'#2ecc71'}; font-weight:600;">${rRem}</p></div>` : ''} </div> </div> <div style="border-left:1px solid #ddd; padding-left:20px; min-width: 150px;"> <h4 style="margin:0 0 10px 0; font-size:13px; color:var(--secondary); text-transform:uppercase;">Actions</h4> ${t.status === 'Solved' ? `<div style="padding-top:10px;"><span style="color:#2ecc71; font-size:13px; font-weight:bold;">✔️ Closed</span></div>` : `<div style="display:flex; flex-direction:column; gap:8px;"><select style="padding:8px; font-size:12px; border:1px solid #ddd; border-radius:5px;" onchange="handleStatusChange(${t.row}, this.value)"><option value="Untouched" ${t.status === 'Untouched' ? 'selected' : ''}>Untouched</option><option value="Escalated" ${t.status === 'Escalated' ? 'selected' : ''}>Escalated</option><option value="Solved" ${t.status === 'Solved' ? 'selected' : ''}>Solved</option></select><button onclick='openEditModal(${sD})' style="background:var(--primary); border:none; border-radius:5px; padding:8px; cursor:pointer; font-size:12px; font-weight:bold; color:white;">✏️ Edit Info</button></div>`} </div> </div> </td> </tr>`;
+      }).join('');
+    }
+    setSyncing(false);
+  }
+
+  async function handleStatusChange(row, status) {
+    let r = ""; if (status === "Solved" || status === "Escalated") { const { value: t } = await Swal.fire({ title: status === 'Solved' ? 'Resolution Remark' : 'Escalation Reason', input: 'text', showCancelButton: true, confirmButtonColor: status === 'Solved' ? '#2ecc71' : '#f39c12' }); if (t) r = t; else if (t === undefined) { loadTickets(); return; } }
+    setSyncing(true); await apiPost('updateTicketStatus', {row: row, status: status, remark: r});
+    loadTickets(); Swal.fire({ icon: 'success', title: 'Updated!', showConfirmButton: false, timer: 1500 });
+  }
+
+  // 🚀 NAYE OPTIONS ADDED HERE
+ async function openTicketModal() {
+    const { value: v } = await Swal.fire({ 
+      title: 'Raise Ticket', 
+      html: `
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; text-align: left; margin-top: 15px;">
+          <div><label style="font-size: 13px; font-weight: 600;">Name *</label><input id="s-n" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px; box-sizing:border-box;"></div>
+          <div><label style="font-size: 13px; font-weight: 600;">Phone</label><input id="s-p" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px; box-sizing:border-box;"></div>
+          <div><label style="font-size: 13px; font-weight: 600;">Course</label>
+            <select id="s-c" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px; box-sizing:border-box;">
+              <option value="N/A">N/A</option>
+              <option value="Fashion Designing">Fashion Designing</option>
+              <option value="Cosmetology">Cosmetology</option>
+            </select>
+          </div>
+          <div><label style="font-size: 13px; font-weight: 600;">Issue *</label>
+            <select id="s-i" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px; box-sizing:border-box;">
+              <option value="" disabled selected>What do you need help with?</option>
+              <option value="NSDC">NSDC</option>
+              <option value="KIT">KIT</option>
+              <option value="Finance">Finance</option>
+              <option value="Training">Training</option>
+              <option value="Onboarding">Onboarding</option>
+              <option value="Cancellation">Cancellation</option>
+              <option value="Exam">Exam</option>
+              <option value="Certificate">Certificate</option>
+              <option value="Portfolio">Portfolio</option>
+              <option value="Extension">Extension</option>
+            </select>
+          </div>
+        </div>`, 
+      width: '600px', 
+      preConfirm: () => { 
+        const n = document.getElementById('s-n').value, i = document.getElementById('s-i').value; 
+        if (!n || !i) { Swal.showValidationMessage('Name & Issue required'); return false; } 
+        return { name: n, phone: document.getElementById('s-p').value, course: document.getElementById('s-c').value, issue: i }; 
+      } 
     });
-
-    els.feedBody.innerHTML = res?.feedbacks?.map((r) => `
-      <tr>
-        <td>${escapeHtml(r.date)}</td>
-        <td>${escapeHtml(r.session)}</td>
-        <td><strong>${escapeHtml(r.name)}</strong></td>
-        <td>${escapeHtml(r.mobile)}</td>
-        <td>${badge(`${r.rating} ★`, theme.orange)}</td>
-        <td>${escapeHtml(r.comment)}</td>
-      </tr>
-    `).join("") || "";
-
-    setSyncing(false);
+    if (v) { setSyncing(true); await apiPost('saveTicket', v); loadTickets(); Swal.fire({icon: 'success', title: 'Created', timer: 1500}); }
   }
 
-  async function loadOnboardTable() {
-    setSyncing(true);
-    const list = await apiGet("getOnboardingTable");
-
-    els.onboardBody.innerHTML = list?.error ? "" : list.map((r) => `
-      <tr>
-        <td><strong>${escapeHtml(r.name)}</strong></td>
-        <td>${escapeHtml(r.phone)}</td>
-        <td>${escapeHtml(r.email)}</td>
-        <td>${badge(r.program, theme.blue)}</td>
-        <td>${escapeHtml(r.source)}</td>
-      </tr>
-    `).join("");
-
-    setSyncing(false);
+  async function openEditModal(t) {
+    const { value: v } = await Swal.fire({ title: 'Edit Ticket', html: `<select id="e-p"><option value="Urgent">Urgent</option><option value="Medium" selected>Medium</option></select>`, preConfirm: () => { return { priority: document.getElementById('e-p').value }; } });
+    if(v) { setSyncing(true); await apiPost('editTicketDetails', {row: t.row, info: v}); loadTickets(); }
   }
 
-  async function loadEnrollData() {
-    setSyncing(true);
-    const list = await apiGet("getEnrollmentData");
-
-    els.enrollBody.innerHTML = list?.error ? "" : list.map((r) => `
-      <tr>
-        <td>${escapeHtml(r.date)}</td>
-        <td><strong>${escapeHtml(r.course)}</strong></td>
-        <td>${badge(r.count, theme.blue)}</td>
-        <td>${escapeHtml(r.by)}</td>
-      </tr>
-    `).join("");
-
-    setSyncing(false);
+  async function loadOnboardTable() { setSyncing(true); let list = await apiGet('getOnboardingTable'); if(list && !list.error) document.getElementById("onboard-body").innerHTML = list.map(r => `<tr><td><strong>${r.name}</strong></td><td>${r.phone}</td><td>${r.email}</td><td><span class="badge" style="background:var(--blue)">${r.program}</span></td><td>${r.source}</td></tr>`).join(''); setSyncing(false); }
+  
+  async function openEnrollModal() {
+    const { value: v } = await Swal.fire({ 
+      title: 'New Enrollment', 
+      html: `
+        <div style="text-align: left; margin-top: 15px;">
+          <div style="margin-bottom: 15px;">
+            <label style="font-size: 13px; font-weight: 600; color: var(--secondary);">Course Name *</label>
+            <select id="en-c" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px; box-sizing:border-box; margin-top: 5px;">
+              <option value="" disabled selected>Select Course...</option>
+              <option value="Activation">Activation</option>
+              <option value="Fashion Designing">Fashion Designing</option>
+              <option value="Cosmetology">Cosmetology</option>
+              <option value="Others">Others</option>
+            </select>
+          </div>
+          <div style="margin-bottom: 15px;">
+            <label style="font-size: 13px; font-weight: 600; color: var(--secondary);">Enrollment Count *</label>
+            <input type="number" id="en-count" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px; box-sizing:border-box; margin-top: 5px;" placeholder="Number of enrollments">
+          </div>
+          <div style="margin-bottom: 5px;">
+            <label style="font-size: 13px; font-weight: 600; color: var(--secondary);">Onboarded By *</label>
+            <select id="en-by" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px; box-sizing:border-box; margin-top: 5px;">
+              <option value="Kumud">Kumud</option>
+              <option value="Sanskriti">Sanskriti</option>
+              <option value="Dhananjaya">Dhananjaya</option>
+              <option value="Web">Web (Form)</option>
+            </select>
+          </div>
+        </div>
+      `, 
+      showCancelButton: true,
+      confirmButtonColor: '#ff7b2c',
+      cancelButtonColor: '#aaa',
+      confirmButtonText: 'Save Data',
+      preConfirm: () => { 
+        const c = document.getElementById('en-c').value;
+        const cnt = document.getElementById('en-count').value;
+        const by = document.getElementById('en-by').value;
+        if(!c || !cnt) { Swal.showValidationMessage('Please fill all fields'); return false; }
+        
+        const d = new Date();
+        const cleanMonth = d.toLocaleString('default', { month: 'short' }) + "-" + d.getFullYear(); 
+        
+        return { course: c, month: cleanMonth, count: cnt, by: by }; 
+      } 
+    });
+    if (v) { setSyncing(true); await apiPost('saveEnrollmentData', v); loadEnrollData(); Swal.fire({icon: 'success', title: 'Saved!', showConfirmButton: false, timer: 1500}); }
+  }
+  
+  async function loadEnrollData() { 
+    setSyncing(true); 
+    let list = await apiGet('getEnrollmentData'); 
+    if(list && !list.error) {
+      document.getElementById('enroll-body').innerHTML = list.map(r => `<tr><td>${r.date}</td><td><strong>${r.course}</strong></td><td><span class="badge" style="background:var(--blue);">${r.count}</span></td><td>${r.by}</td></tr>`).join(''); 
+    }
+    setSyncing(false); 
   }
 
-  async function loadNsdcData() {
-    setSyncing(true);
-    const list = await apiGet("getNsdcData");
-
-    els.nsdcBody.innerHTML = list?.error ? "" : list.map((r) => `
-      <tr>
-        <td>${escapeHtml(r.date)}</td>
-        <td><strong>${escapeHtml(r.type)}</strong></td>
-        <td>${escapeHtml(r.batch)}</td>
-        <td>${badge(r.count, theme.blue)}</td>
-      </tr>
-    `).join("");
-
-    setSyncing(false);
+  async function openNsdcModal(type) {
+    const { value: v } = await Swal.fire({ 
+      title: type, 
+      html: `
+        <div style="text-align: left; margin-top: 15px;">
+          <div style="margin-bottom: 15px;">
+            <label style="font-size: 13px; font-weight: 600; color: var(--secondary);">Batch Number *</label>
+            <input id="n-b" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px; box-sizing:border-box; margin-top: 5px;" placeholder="Enter Batch No.">
+          </div>
+          <div>
+            <label style="font-size: 13px; font-weight: 600; color: var(--secondary);">Count *</label>
+            <input type="number" id="n-c" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px; box-sizing:border-box; margin-top: 5px;" placeholder="Enter Count">
+          </div>
+        </div>
+      `,
+      showCancelButton: true,
+      confirmButtonColor: type === 'Enrollment' ? '#3498db' : '#2ecc71',
+      cancelButtonColor: '#aaa',
+      confirmButtonText: 'Save Data',
+      preConfirm: () => { 
+        const b = document.getElementById('n-b').value;
+        const c = document.getElementById('n-c').value;
+        if(!b || !c) { Swal.showValidationMessage('Please fill all fields'); return false; }
+        return { type: type, batch: b, count: c }; 
+      } 
+    });
+    if(v) { setSyncing(true); await apiPost('saveNsdcData', v); loadNsdcData(); Swal.fire({icon: 'success', title: 'Saved!', showConfirmButton: false, timer: 1500}); }
   }
 
-  async function loadTasks() {
-    setSyncing(true);
-    const list = await apiGet("getTasks");
+  async function loadNsdcData() { setSyncing(true); let list = await apiGet('getNsdcData'); if(list && !list.error) document.getElementById('nsdc-body').innerHTML = list.map(r => `<tr><td>${r.date}</td><td><strong>${r.type}</strong></td><td>${r.batch}</td><td><span class="badge" style="background:var(--blue);">${r.count}</span></td></tr>`).join(''); setSyncing(false); }
 
-    els.tasksBody.innerHTML = list?.error ? "" : list.map((t) => `
-      <tr>
-        <td>${escapeHtml(t.date)}</td>
-        <td><strong>${escapeHtml(t.task)}</strong></td>
-        <td>${escapeHtml(t.executive)}</td>
-        <td>${badge(t.status, t.status === "Done" ? theme.success : theme.danger)}</td>
-        <td>
-          ${t.status === "Done"
-            ? "✔️"
-            : `<select onchange="updateTask(${t.row}, this.value)">
-                <option value="Pending">Pending</option>
-                <option value="Done">Done</option>
-              </select>`
-          }
-        </td>
-      </tr>
-    `).join("");
+  async function loadTasks() { setSyncing(true); let list = await apiGet('getTasks'); if(list && !list.error) document.getElementById("tasks-body").innerHTML = list.map(t => `<tr><td>${t.date}</td><td><strong>${t.task}</strong></td><td>${t.executive}</td><td><span class="badge" style="background:${t.status === 'Done' ? '#2ecc71' : '#e74c3c'}">${t.status}</span></td><td>${t.status === 'Done' ? '✔️' : `<select onchange="updateTask(${t.row}, this.value)"><option value="Pending">Pending</option><option value="Done">Done</option></select>`}</td></tr>`).join(''); setSyncing(false); }
 
-    setSyncing(false);
-  }
+  async function submitTask() { let d = { task: document.getElementById('task-name').value, exec: document.getElementById('task-exec').value, status: document.getElementById('task-status').value }; if(!d.task) return; setSyncing(true); await apiPost('saveTask', d); document.getElementById('task-name').value = ''; loadTasks(); }
+  
+  async function updateTask(r, s) { setSyncing(true); await apiPost('updateTaskStatusRow', {row: r, status: s}); loadTasks(); }
 
   async function loadReportsData() {
     setSyncing(true);
-    const res = await apiGet("getReportsData", {
-      session: $("rep-session").value,
-      groupBy: $("rep-group").value,
-      start: $("rep-start").value,
-      end: $("rep-end").value
-    });
-
-    if (!res?.error) {
-      els.repNpsBody.innerHTML = res.npsReport.length
-        ? res.npsReport.map((r) => `
-          <tr>
-            <td><strong>${escapeHtml(r.key)}</strong></td>
-            <td>${r.total}</td>
-            <td>${badge(r.nps, r.nps >= 50 ? theme.success : r.nps > 0 ? theme.warning : theme.danger)}</td>
-          </tr>
-        `).join("")
-        : `<tr><td colspan="3">No Data Found</td></tr>`;
-
-      els.repTrainerBody.innerHTML = res.trainerReport.length
-        ? res.trainerReport.map((r) => `
-          <tr>
-            <td><strong>${escapeHtml(r.key)}</strong></td>
-            <td>${r.total}</td>
-            <td>${badge(r.nps, r.nps >= 50 ? theme.success : r.nps > 0 ? theme.warning : theme.danger)}</td>
-          </tr>
-        `).join("")
-        : `<tr><td colspan="3">No Data Found / Trainer Column Missing</td></tr>`;
-
-      els.repOpsBody.innerHTML = res.opsReport.length
-        ? res.opsReport.map((r) => `
-          <tr>
-            <td><strong>${escapeHtml(r.key)}</strong></td>
-            <td>${r.tasks || 0}</td>
-            <td>${r.onboard || 0}</td>
-            <td>${r.nsdc || 0}</td>
-          </tr>
-        `).join("")
-        : `<tr><td colspan="4">No Data Found</td></tr>`;
+    let p = { 
+      session: document.getElementById("rep-session").value, 
+      groupBy: document.getElementById("rep-group").value, 
+      start: document.getElementById("rep-start").value, 
+      end: document.getElementById("rep-end").value 
+    };
+    let res = await apiGet('getReportsData', p);
+    if(res && !res.error) {
+      document.getElementById("rep-nps-body").innerHTML = res.npsReport.length ? res.npsReport.map(r => `<tr><td><strong>${r.key}</strong></td><td>${r.total}</td><td><span class="badge" style="background:${r.nps >= 50 ? '#2ecc71' : (r.nps > 0 ? '#f39c12' : '#e74c3c')}">${r.nps}</span></td></tr>`).join('') : `<tr><td colspan="3">No Data Found</td></tr>`;
+      document.getElementById("rep-trainer-body").innerHTML = res.trainerReport.length ? res.trainerReport.map(r => `<tr><td><strong>${r.key}</strong></td><td>${r.total}</td><td><span class="badge" style="background:${r.nps >= 50 ? '#2ecc71' : (r.nps > 0 ? '#f39c12' : '#e74c3c')}">${r.nps}</span></td></tr>`).join('') : `<tr><td colspan="3">No Data Found / Trainer Column Missing</td></tr>`;
+      document.getElementById("rep-ops-body").innerHTML = res.opsReport.length ? res.opsReport.map(r => `<tr><td><strong>${r.key}</strong></td><td>${r.tasks || 0}</td><td>${r.onboard || 0}</td><td>${r.nsdc || 0}</td></tr>`).join('') : `<tr><td colspan="4">No Data Found</td></tr>`;
     }
-
     setSyncing(false);
   }
 
-  async function updateTask(row, status) {
-    setSyncing(true);
-    await apiPost("updateTaskStatusRow", { row, status });
-    await loadTasks();
-  }
-
-  async function submitTask() {
-    const task = $("task-name").value.trim();
-    if (!task) return;
-
-    setSyncing(true);
-    await apiPost("saveTask", {
-      task,
-      exec: $("task-exec").value,
-      status: $("task-status").value
-    });
-    $("task-name").value = "";
-    await loadTasks();
-  }
-
-  function initDateFilters() {
-    const now = new Date();
-    const y = now.getFullYear();
-    const m = String(now.getMonth() + 1).padStart(2, "0");
-    const lastDay = String(new Date(y, now.getMonth() + 1, 0).getDate()).padStart(2, "0");
-    const start = `${y}-${m}-01`;
-    const end = `${y}-${m}-${lastDay}`;
-
-    ["dash-start", "feed-start", "rep-start"].forEach((id) => $(id).value = start);
-    ["dash-end", "dash-end-feed", "rep-end"].forEach((id) => $(id).value = end);
-  }
-
-  async function initSessions() {
-    const list = await apiGet("getSessions");
-    if (list?.error) return;
-
-    sessionSelects.forEach((select) => {
-      const options = list.map((name) => {
-        const option = document.createElement("option");
-        option.value = name;
-        option.textContent = name;
-        return option;
-      });
-      select.append(...options);
-    });
-  }
-
-  window.onload = async () => {
-    initDateFilters();
-    await initSessions();
-    await loadDashboardData();
+  window.onload = async () => { 
+    const now = new Date(); const y = now.getFullYear(); const m = String(now.getMonth() + 1).padStart(2, '0');
+    const startStr = `${y}-${m}-01`; const endStr = `${y}-${m}-${new Date(y, now.getMonth() + 1, 0).getDate()}`;
+    
+    document.getElementById("dash-start").value = startStr; document.getElementById("dash-end").value = endStr;
+    document.getElementById("feed-start").value = startStr; document.getElementById("dash-end-feed").value = endStr;
+    document.getElementById("rep-start").value = startStr; document.getElementById("rep-end").value = endStr;
+    
+    let list = await apiGet('getSessions');
+    if(list && !list.error) document.querySelectorAll(".session-sel").forEach(sel => list.forEach(n => { let o=document.createElement("option"); o.value=n; o.text=n; sel.add(o); }));
+    loadDashboardData();
   };
 </script>
-
 </body>
 </html>
