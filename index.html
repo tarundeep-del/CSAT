@@ -252,8 +252,39 @@
     loadTickets(); Swal.fire({ icon: 'success', title: 'Updated!', showConfirmButton: false, timer: 1500 });
   }
 
+  // 🚀 NAYE OPTIONS ADDED HERE
   async function openTicketModal() {
-    const { value: v } = await Swal.fire({ title: 'Raise Ticket', html: `<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; text-align: left; margin-top: 15px;"><div><label style="font-size: 13px; font-weight: 600;">Name *</label><input id="s-n" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px; box-sizing:border-box;"></div><div><label style="font-size: 13px; font-weight: 600;">Phone</label><input id="s-p" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px; box-sizing:border-box;"></div><div><label style="font-size: 13px; font-weight: 600;">Course</label><select id="s-c" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px; box-sizing:border-box;"><option value="N/A">N/A</option><option value="Fashion Designing">Fashion Designing</option><option value="Cosmetology">Cosmetology</option></select></div><div><label style="font-size: 13px; font-weight: 600;">Issue *</label><select id="s-i" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px; box-sizing:border-box;"><option value="" disabled selected>Issue...</option><option value="NSDC">NSDC</option><option value="Finance">Finance</option></select></div></div>`, width: '600px', preConfirm: () => { const n = document.getElementById('s-n').value, i = document.getElementById('s-i').value; if (!n || !i) { Swal.showValidationMessage('Name & Issue required'); return false; } return { name: n, phone: document.getElementById('s-p').value, course: document.getElementById('s-c').value, issue: i }; } });
+    const { value: v } = await Swal.fire({ 
+      title: 'Raise Ticket', 
+      html: `
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; text-align: left; margin-top: 15px;">
+          <div><label style="font-size: 13px; font-weight: 600;">Name *</label><input id="s-n" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px; box-sizing:border-box;"></div>
+          <div><label style="font-size: 13px; font-weight: 600;">Phone</label><input id="s-p" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px; box-sizing:border-box;"></div>
+          <div><label style="font-size: 13px; font-weight: 600;">Course</label>
+            <select id="s-c" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px; box-sizing:border-box;">
+              <option value="N/A">N/A</option>
+              <option value="Fashion Designing">Fashion Designing</option>
+              <option value="Cosmetology">Cosmetology</option>
+            </select>
+          </div>
+          <div><label style="font-size: 13px; font-weight: 600;">Issue *</label>
+            <select id="s-i" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px; box-sizing:border-box;">
+              <option value="" disabled selected>Issue...</option>
+              <option value="NSDC">NSDC</option>
+              <option value="Finance">Finance</option>
+              <option value="Certificate">Certificate</option>
+              <option value="Portfolio">Portfolio</option>
+              <option value="Extension">Extension</option>
+            </select>
+          </div>
+        </div>`, 
+      width: '600px', 
+      preConfirm: () => { 
+        const n = document.getElementById('s-n').value, i = document.getElementById('s-i').value; 
+        if (!n || !i) { Swal.showValidationMessage('Name & Issue required'); return false; } 
+        return { name: n, phone: document.getElementById('s-p').value, course: document.getElementById('s-c').value, issue: i }; 
+      } 
+    });
     if (v) { setSyncing(true); await apiPost('saveTicket', v); loadTickets(); Swal.fire({icon: 'success', title: 'Created', timer: 1500}); }
   }
 
@@ -264,7 +295,6 @@
 
   async function loadOnboardTable() { setSyncing(true); let list = await apiGet('getOnboardingTable'); if(list && !list.error) document.getElementById("onboard-body").innerHTML = list.map(r => `<tr><td><strong>${r.name}</strong></td><td>${r.phone}</td><td>${r.email}</td><td><span class="badge" style="background:var(--blue)">${r.program}</span></td><td>${r.source}</td></tr>`).join(''); setSyncing(false); }
   
-  // 🚀 PREMIUM ENROLLMENT MODAL (Course is Dropdown & Month is removed from output)
   async function openEnrollModal() {
     const { value: v } = await Swal.fire({ 
       title: 'New Enrollment', 
@@ -318,13 +348,11 @@
     setSyncing(true); 
     let list = await apiGet('getEnrollmentData'); 
     if(list && !list.error) {
-      // 🚀 NAYA: Output table se 'Month' column hata diya gaya hai (${r.month} removed)
       document.getElementById('enroll-body').innerHTML = list.map(r => `<tr><td>${r.date}</td><td><strong>${r.course}</strong></td><td><span class="badge" style="background:var(--blue);">${r.count}</span></td><td>${r.by}</td></tr>`).join(''); 
     }
     setSyncing(false); 
   }
 
-  // 🚀 PREMIUM NSDC MODAL
   async function openNsdcModal(type) {
     const { value: v } = await Swal.fire({ 
       title: type, 
@@ -362,7 +390,6 @@
   
   async function updateTask(r, s) { setSyncing(true); await apiPost('updateTaskStatusRow', {row: r, status: s}); loadTasks(); }
 
-  // REPORTS LOADER
   async function loadReportsData() {
     setSyncing(true);
     let p = { 
