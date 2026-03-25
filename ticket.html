@@ -166,6 +166,9 @@
           <option value="Onboarding">Onboarding</option>
           <option value="Cancellation">Cancellation</option>
           <option value="Exam">Exam</option>
+          <option value="Certificate">Certificate</option>
+          <option value="Portfolio">Portfolio</option>
+          <option value="Extension">Extension</option>
         </select>
       </div>
 
@@ -179,16 +182,16 @@
   </div>
 
   <script>
-    // ⚠️⚠️ YAHAN APNA SAME WEB APP URL PASTE KARO JO DASHBOARD MEIN KIYA THA ⚠️⚠️
     const API_URL = "https://script.google.com/macros/s/AKfycbzZvoyP-WOdDdUFmktk3XS79mIOkq7sWjAcBBXWthAQBwHmMBJRP33PUE_qkusfqxWb/exec"; 
 
     async function apiPost(action, dataObj = {}) {
       try {
         let res = await fetch(API_URL, {
           method: 'POST',
-          headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // Bypasses CORS preflight
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
           body: JSON.stringify({ action: action, data: dataObj }),
-          redirect: "follow"
+          redirect: "follow",
+          credentials: "omit" // 🚀 Added to prevent CORS errors during form submission
         });
         return await res.json();
       } catch (e) {
@@ -198,7 +201,7 @@
     }
 
     async function submitForm(event) {
-      event.preventDefault(); // Prevents page reload
+      event.preventDefault(); 
       
       const btn = document.getElementById('submitBtn');
       btn.disabled = true;
@@ -212,9 +215,9 @@
         course: document.getElementById('course').value,
         issue: document.getElementById('issue').value,
         remark: document.getElementById('remark').value || "-",
-        source: "Web Form", // Hardcoded source
-        priority: "Medium", // Default priority for student forms
-        assigned: "Unassigned" // Default
+        source: "Web Form", 
+        priority: "Medium", 
+        assigned: "Unassigned" 
       };
 
       // Show Loading Alert
@@ -238,7 +241,7 @@
           text: 'Our team will contact you shortly.',
           confirmButtonColor: '#ff7b2c'
         });
-        document.getElementById('ticketForm').reset(); // Clear form
+        document.getElementById('ticketForm').reset();
       } else {
         Swal.fire({
           icon: 'error',
