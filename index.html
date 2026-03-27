@@ -205,7 +205,12 @@
 
     .toggle-btn { background: none; border: none; cursor: pointer; font-size: 12px; color: var(--secondary); transition: transform 0.3s; padding: 5px; }
     .main-row:hover, .student-row:hover { background: #f8f9fa; }
+    
+    /* Tickets Details Row */
     .detail-row-content { display: grid; grid-template-columns: 1fr 1fr auto; gap: 20px; padding: 20px; background: #fafbfc; border-left: 4px solid var(--primary); box-shadow: inset 0 3px 6px rgba(0, 0, 0, 0.02); margin: 0; }
+    
+    /* Student DB Details Row */
+    .detail-row-student { display: grid; grid-template-columns: 1fr; padding: 15px 25px; background: #fafbfc; border-left: 4px solid var(--primary); margin: 0; }
 
     .mobile-menu { display: none; background: var(--secondary); color: #fff; padding: 15px; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 999; }
     .mobile-menu select { width: 60%; background: #fff; color: #000; border: none; padding: 8px; }
@@ -257,7 +262,8 @@
           <option value="tick">Ticketing</option>
           <option value="onboard">Onboarding</option>
           <option value="enroll">Enrollment</option>
-          <option value="students">Student Database</option> <option value="nsdc">NSDC</option>
+          <option value="students">Student Database</option>
+          <option value="nsdc">NSDC</option>
           <option value="tasks">Tasks</option>
           <option value="report">Reports</option>
         </select>
@@ -275,7 +281,8 @@
             <li id="m-tick" data-view="tick">Ticketing</li>
             <li id="m-onboard" data-view="onboard">Onboarding</li>
             <li id="m-enroll" data-view="enroll">Onboarding Data</li>
-            <li id="m-students" data-view="students">Student Database</li> <li id="m-nsdc" data-view="nsdc">NSDC / Certificate</li>
+            <li id="m-students" data-view="students">Student Database</li>
+            <li id="m-nsdc" data-view="nsdc">NSDC / Certificate</li>
             <li id="m-tasks" data-view="tasks">Daily Tasks</li>
             <li id="m-report" data-view="report">Analytics Reports</li>
           </ul>
@@ -376,7 +383,15 @@
           </div>
           <div class="table-wrapper" style="margin-top: 0;">
             <table>
-              <thead><tr><th>Name</th><th>Phone Number</th><th>Email Address</th><th>Course</th><th>Date/Batch</th><th>Address</th></tr></thead>
+              <thead>
+                <tr>
+                  <th style="width: 30px;"></th> <th>Name</th>
+                  <th>Phone Number</th>
+                  <th>Email Address</th>
+                  <th>Course</th>
+                  <th>Date/Batch</th>
+                </tr>
+              </thead>
               <tbody id="students-body"></tbody>
             </table>
           </div>
@@ -434,6 +449,7 @@
   </div>
 
   <script>
+    // API URL - Backend Script Link
     const API_URL = "https://script.google.com/macros/s/AKfycbzZvoyP-WOdDdUFmktk3XS79mIOkq7sWjAcBBXWthAQBwHmMBJRP33PUE_qkusfqxWb/exec";
 
     const theme = { orange: "#ff7b2c", navy: "#1f2235", blue: "#3498db", light: "#f0f2f5", purple: "#9b59b6", success: "#2ecc71", danger: "#e74c3c", warning: "#f39c12" };
@@ -515,7 +531,7 @@
       tick: { title: "TICKETING", loader: loadTickets },
       onboard: { title: "ONBOARDING", loader: loadOnboardTable },
       enroll: { title: "ONBOARDING DATA", loader: loadEnrollData },
-      students: { title: "STUDENT DATABASE", loader: loadStudentDatabase }, // NEW
+      students: { title: "STUDENT DATABASE", loader: loadStudentDatabase }, // NEW STUDENT DB LOADER
       nsdc: { title: "NSDC / CERTIFICATE", loader: loadNsdcData },
       tasks: { title: "DAILY TASKS", loader: loadTasks },
       report: { title: "ANALYTICS REPORTS", loader: loadReportsData }
@@ -629,6 +645,7 @@
       setSyncing(false);
     }
 
+    // Toggle logic for TICKETING table
     function toggleDetails(rowId) {
       const details = $("details-" + rowId); const button = $("btn-" + rowId);
       if (!details || !button) return;
@@ -724,22 +741,42 @@
       setSyncing(false);
     }
 
-    // 🚀 NEW: STUDENT DATABASE LOADER
-   async function loadStudentDatabase() {
-  setSyncing(true);
-  const list = await apiGet("getStudentDatabase");
-  const rows = (list && !list.error ? list : []).map((s) => `
-    <tr class="student-row">
-      <td><strong>${escapeHtml(s.name)}</strong></td>
-      <td>${escapeHtml(s.phone)}</td>
-      <td>${escapeHtml(s.email)}</td>
-      <td>${makeBadge(s.course, theme.blue)}</td>
-      <td>${escapeHtml(s.date)}</td>
-      <td>${escapeHtml(s.address)}</td> </tr>
-  `);
-  el["students-body"].innerHTML = rowOrEmpty(rows, 6, "No Student Data Found");
-  setSyncing(false);
-}
+    // 🚀 NEW: STUDENT DATABASE LOADER (WITH EXPANSION ARROW)
+    function toggleStdDetails(rowId) {
+      const details = $("details-std-" + rowId);
+      const button = $("btn-std-" + rowId);
+      if (!details || !button) return;
+      const isHidden = details.style.display === "none" || details.style.display === "";
+      details.style.display = isHidden ? "table-row" : "none";
+      button.style.transform = isHidden ? "rotate(90deg)" : "rotate(0deg)";
+    }
+
+    async function loadStudentDatabase() {
+      setSyncing(true);
+      const list = await apiGet("getStudentDatabase");
+      const rows = (list && !list.error ? list : []).map((s) => `
+        <tr class="student-row" style="cursor:pointer;" data-toggle-std="${s.rowId}">
+          <td style="text-align:center;">
+            <button id="btn-std-${s.rowId}" class="toggle-btn" style="pointer-events:none;">▶</button>
+          </td>
+          <td><strong>${escapeHtml(s.name)}</strong></td>
+          <td>${escapeHtml(s.phone)}</td>
+          <td>${escapeHtml(s.email)}</td>
+          <td>${makeBadge(s.course, theme.blue)}</td>
+          <td>${escapeHtml(s.date)}</td>
+        </tr>
+        <tr id="details-std-${s.rowId}" style="display:none;">
+          <td colspan="6" style="padding:0; border-bottom:1px solid #eee;">
+            <div class="detail-row-student">
+              <p style="margin:5px 0; font-size:13px; line-height:1.5;"><strong>📍 Address:</strong> ${escapeHtml(s.address)}</p>
+              <p style="margin:5px 0; font-size:13px; margin-top:10px;"><strong>👤 Counsellor Name:</strong> ${escapeHtml(s.counsellor)}</p>
+            </div>
+          </td>
+        </tr>
+      `);
+      el["students-body"].innerHTML = rowOrEmpty(rows, 6, "No Student Data Found");
+      setSyncing(false);
+    }
 
     // 🔍 NEW: SEARCH FILTER LOGIC FOR STUDENT DB
     function filterStudents(e) {
@@ -747,7 +784,13 @@
       const rows = $$("#students-body tr.student-row");
       rows.forEach(row => {
         const text = row.innerText.toLowerCase();
-        row.style.display = text.includes(input) ? "" : "none";
+        const detailRow = $("details-std-" + row.dataset.toggleStd);
+        if (text.includes(input)) {
+          row.style.display = "";
+        } else {
+          row.style.display = "none";
+          if (detailRow) detailRow.style.display = "none"; 
+        }
       });
     }
 
@@ -837,15 +880,22 @@
       // SEARCH BINDING
       if($("student-search")) { $("student-search").addEventListener("keyup", filterStudents); }
 
+      // TICKETING TOGGLE BINDING
       el["tick-body"].addEventListener("click", (e) => {
         const toggleRow = e.target.closest("[data-toggle-row]"); if (toggleRow) { toggleDetails(toggleRow.dataset.toggleRow); return; }
         const editButton = e.target.closest(".edit-ticket-btn"); if (editButton) { const ticket = JSON.parse(decodeURIComponent(editButton.dataset.ticket)); openEditModal(ticket); }
       });
+      
+      // STUDENT DB TOGGLE BINDING
+      el["students-body"].addEventListener("click", (e) => {
+        const toggleRow = e.target.closest("[data-toggle-std]");
+        if (toggleRow) { toggleStdDetails(toggleRow.dataset.toggleStd); }
+      });
+
       el["tick-body"].addEventListener("change", (e) => { const select = e.target.closest("[data-status-row]"); if (select) { handleStatusChange(select.dataset.statusRow, select.value); } });
       el["tasks-body"].addEventListener("change", (e) => { const select = e.target.closest("[data-task-row]"); if (select) { updateTask(select.dataset.taskRow, select.value); } });
     }
 
-    // 🚀 INITIATES THE DASHBOARD (Called ONLY after Login)
     async function initApp() {
       cacheElements();
       bindEvents();
