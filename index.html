@@ -376,7 +376,7 @@
           </div>
           <div class="table-wrapper" style="margin-top: 0;">
             <table>
-              <thead><tr><th>Name</th><th>Phone Number</th><th>Email Address</th><th>Course</th><th>Date/Batch</th><th>Status</th></tr></thead>
+              <thead><tr><th>Name</th><th>Phone Number</th><th>Email Address</th><th>Course</th><th>Date/Batch</th><th>Address</th></tr></thead>
               <tbody id="students-body"></tbody>
             </table>
           </div>
@@ -725,22 +725,21 @@
     }
 
     // 🚀 NEW: STUDENT DATABASE LOADER
-    async function loadStudentDatabase() {
-      setSyncing(true);
-      const list = await apiGet("getStudentDatabase");
-      const rows = (list && !list.error ? list : []).map((s) => `
-        <tr class="student-row">
-          <td><strong>${escapeHtml(s.name)}</strong></td>
-          <td>${escapeHtml(s.phone)}</td>
-          <td>${escapeHtml(s.email)}</td>
-          <td>${makeBadge(s.course, theme.blue)}</td>
-          <td>${escapeHtml(s.date)}</td>
-          <td>${makeBadge(s.status, s.status.toLowerCase() === 'active' ? theme.success : theme.danger)}</td>
-        </tr>
-      `);
-      el["students-body"].innerHTML = rowOrEmpty(rows, 6, "No Student Data Found");
-      setSyncing(false);
-    }
+   async function loadStudentDatabase() {
+  setSyncing(true);
+  const list = await apiGet("getStudentDatabase");
+  const rows = (list && !list.error ? list : []).map((s) => `
+    <tr class="student-row">
+      <td><strong>${escapeHtml(s.name)}</strong></td>
+      <td>${escapeHtml(s.phone)}</td>
+      <td>${escapeHtml(s.email)}</td>
+      <td>${makeBadge(s.course, theme.blue)}</td>
+      <td>${escapeHtml(s.date)}</td>
+      <td>${escapeHtml(s.address)}</td> </tr>
+  `);
+  el["students-body"].innerHTML = rowOrEmpty(rows, 6, "No Student Data Found");
+  setSyncing(false);
+}
 
     // 🔍 NEW: SEARCH FILTER LOGIC FOR STUDENT DB
     function filterStudents(e) {
