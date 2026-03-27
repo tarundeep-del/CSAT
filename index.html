@@ -709,20 +709,33 @@
       setSyncing(false);
     }
 
-    function filterStudents(e) {
-      const input = e.target.value.toLowerCase();
-      const rows = $$("#students-body tr.student-row");
-      rows.forEach(row => {
-        const text = row.innerText.toLowerCase();
-        const detailRow = $("details-std-" + row.dataset.toggleStd);
-        if (text.includes(input)) {
-          row.style.display = "";
-        } else {
-          row.style.display = "none";
-          if (detailRow) detailRow.style.display = "none"; 
-        }
-      });
-    }
+ // Variable to hold our typing timer
+let searchTimeout;
+
+function filterStudents(e) {
+  // Clear the timer if the user is still typing
+  clearTimeout(searchTimeout);
+  
+  // Wait 300 milliseconds after the user stops typing to run the search
+  searchTimeout = setTimeout(() => {
+    const input = e.target.value.toLowerCase();
+    const rows = $$("#students-body tr.student-row");
+    
+    rows.forEach(row => {
+      // 🚀 Swap innerText for textContent! This is significantly faster.
+      const text = row.textContent.toLowerCase();
+      const detailRow = $("details-std-" + row.dataset.toggleStd);
+      
+      if (text.includes(input)) {
+        row.style.display = "";
+      } else {
+        row.style.display = "none";
+        // Also hide the detail row if it exists
+        if (detailRow) detailRow.style.display = "none"; 
+      }
+    });
+  }, 300); // 300ms delay
+}
 
     async function openNsdcModal(type) {
       const { value } = await Swal.fire({
