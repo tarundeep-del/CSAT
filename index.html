@@ -742,6 +742,7 @@
     }
 
     // 🚀 NEW: STUDENT DATABASE LOADER (WITH EXPANSION ARROW)
+  // 🚀 NEW: STUDENT DATABASE LOADER (WITH EXPANSION ARROW)
     function toggleStdDetails(rowId) {
       const details = $("details-std-" + rowId);
       const button = $("btn-std-" + rowId);
@@ -749,6 +750,38 @@
       const isHidden = details.style.display === "none" || details.style.display === "";
       details.style.display = isHidden ? "table-row" : "none";
       button.style.transform = isHidden ? "rotate(90deg)" : "rotate(0deg)";
+    }
+
+    async function loadStudentDatabase() {
+      setSyncing(true);
+      const list = await apiGet("getStudentDatabase");
+      const rows = (list && !list.error ? list : []).map((s, index) => {
+        // 🔥 Galti theek karne ka master trick
+        const uniqueId = s.rowId || index; 
+        const counsellorName = s.counsellor || "Backend Not Updated / Not Assigned";
+
+        return `
+        <tr class="student-row" style="cursor:pointer;" data-toggle-std="${uniqueId}">
+          <td style="text-align:center;">
+            <button id="btn-std-${uniqueId}" class="toggle-btn" style="pointer-events:none;">▶</button>
+          </td>
+          <td><strong>${escapeHtml(s.name)}</strong></td>
+          <td>${escapeHtml(s.phone)}</td>
+          <td>${escapeHtml(s.email)}</td>
+          <td>${makeBadge(s.course, theme.blue)}</td>
+          <td>${escapeHtml(s.date)}</td>
+        </tr>
+        <tr id="details-std-${uniqueId}" style="display:none;">
+          <td colspan="6" style="padding:0; border-bottom:1px solid #eee;">
+            <div class="detail-row-student">
+              <p style="margin:5px 0; font-size:13px; line-height:1.5;"><strong>📍 Address:</strong> ${escapeHtml(s.address)}</p>
+              <p style="margin:5px 0; font-size:13px; margin-top:10px;"><strong>👤 Counsellor Name:</strong> ${escapeHtml(counsellorName)}</p>
+            </div>
+          </td>
+        </tr>
+      `});
+      el["students-body"].innerHTML = rowOrEmpty(rows, 6, "No Student Data Found");
+      setSyncing(false);
     }
 
     async function loadStudentDatabase() {
