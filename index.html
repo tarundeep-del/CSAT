@@ -56,57 +56,14 @@
       text-align: center;
     }
 
-    .login-box h2 {
-      color: var(--primary);
-      margin: 0 0 10px;
-      font-size: 1.8rem;
-      font-weight: 800;
-    }
-
-    .login-box p {
-      color: var(--muted);
-      margin-bottom: 25px;
-      font-size: 14px;
-    }
-
-    .login-input-group {
-      margin-bottom: 20px;
-      text-align: left;
-    }
-
-    .login-input-group label {
-      display: block;
-      margin-bottom: 8px;
-      font-size: 13px;
-      font-weight: 700;
-      color: var(--secondary);
-    }
-
-    .login-input-group input {
-      width: 100%;
-      padding: 12px;
-      border: 1px solid #ddd;
-      border-radius: 8px;
-      font-size: 14px;
-      outline: none;
-      transition: border 0.3s;
-    }
-
+    .login-box h2 { color: var(--primary); margin: 0 0 10px; font-size: 1.8rem; font-weight: 800; }
+    .login-box p { color: var(--muted); margin-bottom: 25px; font-size: 14px; }
+    .login-input-group { margin-bottom: 20px; text-align: left; }
+    .login-input-group label { display: block; margin-bottom: 8px; font-size: 13px; font-weight: 700; color: var(--secondary); }
+    .login-input-group input { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; outline: none; transition: border 0.3s; }
     .login-input-group input:focus { border-color: var(--primary); }
 
-    .btn-login {
-      width: 100%;
-      background: var(--primary);
-      color: #fff;
-      border: none;
-      padding: 12px;
-      border-radius: 8px;
-      cursor: pointer;
-      font-size: 16px;
-      font-weight: 700;
-      transition: opacity 0.3s;
-    }
-
+    .btn-login { width: 100%; background: var(--primary); color: #fff; border: none; padding: 12px; border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: 700; transition: opacity 0.3s; }
     .btn-login:hover { opacity: 0.9; }
     .btn-login:disabled { background: #aaa; cursor: not-allowed; }
 
@@ -114,70 +71,27 @@
     .layout { display: flex; min-height: 100vh; }
 
     .sidebar {
-      width: 220px;
-      background: var(--secondary);
-      color: #fff;
-      padding: 20px;
-      position: fixed;
-      height: 100vh;
-      z-index: 1000;
-      overflow-y: auto;
-      display: flex;
-      flex-direction: column;
+      width: 220px; background: var(--secondary); color: #fff; padding: 20px; position: fixed; height: 100vh; z-index: 1000; overflow-y: auto; display: flex; flex-direction: column;
     }
 
-    .sidebar h2 {
-      color: var(--primary);
-      margin: 0 0 30px;
-      font-size: 1.4rem;
-      font-weight: 800;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-      padding-bottom: 15px;
-    }
-
+    .sidebar h2 { color: var(--primary); margin: 0 0 30px; font-size: 1.4rem; font-weight: 800; border-bottom: 1px solid rgba(255, 255, 255, 0.1); padding-bottom: 15px; }
     .sidebar ul { list-style: none; padding: 0; margin: 0; flex: 1; }
-
-    .sidebar li {
-      padding: 12px 15px;
-      cursor: pointer;
-      opacity: 0.8;
-      border-radius: 8px;
-      margin-bottom: 10px;
-      transition: 0.2s;
-      font-weight: 500;
-    }
-
-    .sidebar li.active {
-      background: var(--primary);
-      opacity: 1;
-      box-shadow: 0 4px 10px rgba(255, 123, 44, 0.3);
-    }
-
+    .sidebar li { padding: 12px 15px; cursor: pointer; opacity: 0.8; border-radius: 8px; margin-bottom: 10px; transition: 0.2s; font-weight: 500; }
+    .sidebar li.active { background: var(--primary); opacity: 1; box-shadow: 0 4px 10px rgba(255, 123, 44, 0.3); }
     .sidebar li:hover:not(.active) { background: rgba(255, 255, 255, 0.1); opacity: 1; }
 
     .main { flex: 1; margin-left: 240px; padding: 30px; width: calc(100% - 240px); }
+    .filters, .toolbar, .table-wrapper, .content-section, .form-section, .card { background: var(--panel); border-radius: var(--radius); box-shadow: var(--shadow); }
 
-    .filters, .toolbar, .table-wrapper, .content-section, .form-section, .card {
-      background: var(--panel); border-radius: var(--radius); box-shadow: var(--shadow);
-    }
-
-    .filters {
-      padding: 20px; margin-bottom: 25px; display: grid;
-      grid-template-columns: 2fr 1fr 1.2fr 1.2fr auto; gap: 15px; align-items: flex-end;
-    }
-
+    .filters { padding: 20px; margin-bottom: 25px; display: grid; grid-template-columns: 2fr 1fr 1.2fr 1.2fr auto; gap: 15px; align-items: flex-end; }
     .filter-group { display: flex; flex-direction: column; gap: 6px; font-size: 12px; font-weight: 700; color: var(--secondary); }
-
     select, input { padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; outline: none; width: 100%; height: 40px; }
-
     .btn-apply { background: var(--primary); color: #fff; border: none; padding: 0 20px; border-radius: 8px; cursor: pointer; font-weight: 700; height: 40px; white-space: nowrap; }
 
     .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 20px; margin-bottom: 30px; }
-
     .card { padding: 20px; text-align: center; transition: 0.3s; }
     .card h3 { margin: 0; font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
     .card h2 { margin: 10px 0 0; font-size: 28px; color: var(--secondary); font-weight: 800; }
-
     .card.total-feedback { border-top: 6px solid var(--accent); }
     .card.untouched { border-top: 6px solid var(--danger); }
     .card.solved { border-top: 6px solid var(--success); }
@@ -185,7 +99,6 @@
     .card.enrolled-card { border-top: 6px solid var(--purple); }
 
     .chart-container { display: grid; grid-template-columns: 1fr 1fr; gap: 25px; }
-
     .content-section, .form-section { padding: 15px; display: flex; flex-direction: column; justify-content: center; position: relative; }
     .full-width-chart { grid-column: 1 / -1; height: 260px; margin-top: 5px; }
     canvas { max-width: 100% !important; max-height: 100% !important; }
@@ -206,10 +119,10 @@
     .toggle-btn { background: none; border: none; cursor: pointer; font-size: 12px; color: var(--secondary); transition: transform 0.3s; padding: 5px; }
     .main-row:hover, .student-row:hover { background: #f8f9fa; }
     
-    /* Tickets Details Row */
+    /* Used for Ticketing Details */
     .detail-row-content { display: grid; grid-template-columns: 1fr 1fr auto; gap: 20px; padding: 20px; background: #fafbfc; border-left: 4px solid var(--primary); box-shadow: inset 0 3px 6px rgba(0, 0, 0, 0.02); margin: 0; }
     
-    /* Student DB Details Row */
+    /* Used for Student Details */
     .detail-row-student { display: grid; grid-template-columns: 1fr; padding: 15px 25px; background: #fafbfc; border-left: 4px solid var(--primary); margin: 0; }
 
     .mobile-menu { display: none; background: var(--secondary); color: #fff; padding: 15px; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 999; }
@@ -460,9 +373,31 @@
     const charts = { gauge: null, dist: null, onboarding: null };
 
     // ==========================================
-    // 🔐 LOGIN & AUTHENTICATION SYSTEM
+    // 🔐 LOGIN & AUTHENTICATION SYSTEM (8-Hour Keep Alive)
     // ==========================================
-    
+    const SESSION_TIMEOUT = 28800000; // 8 Hours in ms
+
+    function showDashboard(user) {
+      $("login-container").classList.add("hidden");
+      $("app-container").classList.remove("hidden");
+      $("user-info").innerHTML = `Logged in as:<br><strong>${escapeHtml(user.name)}</strong><br>(${escapeHtml(user.department)})`;
+      initApp(); 
+    }
+
+    function checkSavedSession() {
+      const savedUser = localStorage.getItem("csat_user");
+      const loginTime = localStorage.getItem("csat_time");
+
+      if (savedUser && loginTime) {
+        const timePassed = Date.now() - parseInt(loginTime);
+        if (timePassed < SESSION_TIMEOUT) {
+          showDashboard(JSON.parse(savedUser));
+        } else {
+          handleLogout(false);
+        }
+      }
+    }
+
     async function handleLogin() {
       const email = $("login-email").value.trim();
       const password = $("login-password").value.trim();
@@ -483,37 +418,29 @@
       btn.disabled = false;
 
       if (res && res.success) {
-        $("login-container").classList.add("hidden");
-        $("app-container").classList.remove("hidden");
-        
-        $("user-info").innerHTML = `Logged in as:<br><strong>${escapeHtml(res.user.name)}</strong><br>(${escapeHtml(res.user.department)})`;
+        localStorage.setItem("csat_user", JSON.stringify(res.user));
+        localStorage.setItem("csat_time", Date.now().toString());
 
-        Swal.fire({
-          icon: "success",
-          title: "Welcome, " + res.user.name + "!",
-          text: "Logging into your dashboard...",
-          timer: 1500,
-          showConfirmButton: false
-        });
-
-        initApp();
+        Swal.fire({ icon: "success", title: "Welcome, " + res.user.name + "!", text: "Logging into your dashboard...", timer: 1500, showConfirmButton: false });
+        showDashboard(res.user);
       } else {
-        Swal.fire({
-          icon: "error",
-          title: "Access Denied",
-          text: res.error || "Invalid Email or Password. Please try again."
-        });
+        Swal.fire({ icon: "error", title: "Access Denied", text: res.error || "Invalid Email or Password. Please try again." });
       }
     }
 
-    function handleLogout() {
+    function handleLogout(showAlert = true) {
+      localStorage.removeItem("csat_user");
+      localStorage.removeItem("csat_time");
+      
       $("login-email").value = "";
       $("login-password").value = "";
       
       $("app-container").classList.add("hidden");
       $("login-container").classList.remove("hidden");
 
-      Swal.fire({ icon: "info", title: "Logged Out", text: "You have securely logged out.", timer: 1500, showConfirmButton: false });
+      if (showAlert) {
+        Swal.fire({ icon: "info", title: "Logged Out", text: "You have securely logged out.", timer: 1500, showConfirmButton: false });
+      }
     }
 
     $("btn-login-submit").addEventListener("click", handleLogin);
@@ -531,7 +458,7 @@
       tick: { title: "TICKETING", loader: loadTickets },
       onboard: { title: "ONBOARDING", loader: loadOnboardTable },
       enroll: { title: "ONBOARDING DATA", loader: loadEnrollData },
-      students: { title: "STUDENT DATABASE", loader: loadStudentDatabase }, // NEW STUDENT DB LOADER
+      students: { title: "STUDENT DATABASE", loader: loadStudentDatabase },
       nsdc: { title: "NSDC / CERTIFICATE", loader: loadNsdcData },
       tasks: { title: "DAILY TASKS", loader: loadTasks },
       report: { title: "ANALYTICS REPORTS", loader: loadReportsData }
@@ -552,7 +479,6 @@
 
     function makeBadge(text, background, extraStyle = "") { return `<span class="badge" style="background:${background};${extraStyle}">${escapeHtml(text)}</span>`; }
     function rowOrEmpty(rows, colspan, message = "No Data Found") { return rows.length ? rows.join("") : `<tr><td colspan="${colspan}">${message}</td></tr>`; }
-
     function setSyncing(isSyncing) { $$(".card, .content-section, .table-wrapper").forEach((n) => n.classList.toggle("syncing", isSyncing)); }
 
     async function request(method, action, payload = {}) {
@@ -579,7 +505,6 @@
 
     function apiGet(action, params = {}) { return request("GET", action, params); }
     function apiPost(action, data = {}) { return request("POST", action, data); }
-
     function destroyChart(name) { if (charts[name]) { charts[name].destroy(); charts[name] = null; } }
 
     function renderCharts(stats) {
@@ -645,7 +570,7 @@
       setSyncing(false);
     }
 
-    // Toggle logic for TICKETING table
+    // Toggle for TICKETING table
     function toggleDetails(rowId) {
       const details = $("details-" + rowId); const button = $("btn-" + rowId);
       if (!details || !button) return;
@@ -741,8 +666,7 @@
       setSyncing(false);
     }
 
-    // 🚀 NEW: STUDENT DATABASE LOADER (WITH EXPANSION ARROW)
-  // 🚀 NEW: STUDENT DATABASE LOADER (WITH EXPANSION ARROW)
+    // 🚀 100% BULLETPROOF STUDENT DATABASE LOADER
     function toggleStdDetails(rowId) {
       const details = $("details-std-" + rowId);
       const button = $("btn-std-" + rowId);
@@ -756,9 +680,9 @@
       setSyncing(true);
       const list = await apiGet("getStudentDatabase");
       const rows = (list && !list.error ? list : []).map((s, index) => {
-        // 🔥 Galti theek karne ka master trick
+        // Fallback IDs agar backend abhi tak purana data bhej raha hai
         const uniqueId = s.rowId || index; 
-        const counsellorName = s.counsellor || "Backend Not Updated / Not Assigned";
+        const counsellorName = s.counsellor || "Not Assigned / Backend Update Pending";
 
         return `
         <tr class="student-row" style="cursor:pointer;" data-toggle-std="${uniqueId}">
@@ -779,39 +703,12 @@
             </div>
           </td>
         </tr>
-      `});
+        `;
+      });
       el["students-body"].innerHTML = rowOrEmpty(rows, 6, "No Student Data Found");
       setSyncing(false);
     }
 
-    async function loadStudentDatabase() {
-      setSyncing(true);
-      const list = await apiGet("getStudentDatabase");
-      const rows = (list && !list.error ? list : []).map((s) => `
-        <tr class="student-row" style="cursor:pointer;" data-toggle-std="${s.rowId}">
-          <td style="text-align:center;">
-            <button id="btn-std-${s.rowId}" class="toggle-btn" style="pointer-events:none;">▶</button>
-          </td>
-          <td><strong>${escapeHtml(s.name)}</strong></td>
-          <td>${escapeHtml(s.phone)}</td>
-          <td>${escapeHtml(s.email)}</td>
-          <td>${makeBadge(s.course, theme.blue)}</td>
-          <td>${escapeHtml(s.date)}</td>
-        </tr>
-        <tr id="details-std-${s.rowId}" style="display:none;">
-          <td colspan="6" style="padding:0; border-bottom:1px solid #eee;">
-            <div class="detail-row-student">
-              <p style="margin:5px 0; font-size:13px; line-height:1.5;"><strong>📍 Address:</strong> ${escapeHtml(s.address)}</p>
-              <p style="margin:5px 0; font-size:13px; margin-top:10px;"><strong>👤 Counsellor Name:</strong> ${escapeHtml(s.counsellor)}</p>
-            </div>
-          </td>
-        </tr>
-      `);
-      el["students-body"].innerHTML = rowOrEmpty(rows, 6, "No Student Data Found");
-      setSyncing(false);
-    }
-
-    // 🔍 NEW: SEARCH FILTER LOGIC FOR STUDENT DB
     function filterStudents(e) {
       const input = e.target.value.toLowerCase();
       const rows = $$("#students-body tr.student-row");
@@ -937,6 +834,9 @@
       await initSessions();
       await loadDashboardData();
     }
+
+    // 🔥 PAGE LOAD PE CHECK KAREGA KI USER ALREADY LOGGED IN HAI YA NAHI
+    window.addEventListener('DOMContentLoaded', checkSavedSession);
   </script>
 </body>
 </html>
