@@ -204,11 +204,15 @@
     .syncing { animation: pulse-bg 1.2s infinite ease-in-out; pointer-events: none; opacity: 0.7; }
 
     .toggle-btn { background: none; border: none; cursor: pointer; font-size: 12px; color: var(--secondary); transition: transform 0.3s; padding: 5px; }
-    .main-row:hover { background: #f8f9fa; }
+    .main-row:hover, .student-row:hover { background: #f8f9fa; }
     .detail-row-content { display: grid; grid-template-columns: 1fr 1fr auto; gap: 20px; padding: 20px; background: #fafbfc; border-left: 4px solid var(--primary); box-shadow: inset 0 3px 6px rgba(0, 0, 0, 0.02); margin: 0; }
 
     .mobile-menu { display: none; background: var(--secondary); color: #fff; padding: 15px; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 999; }
     .mobile-menu select { width: 60%; background: #fff; color: #000; border: none; padding: 8px; }
+
+    /* STUDENT SEARCH BAR STYLES */
+    .search-input { width: 250px !important; padding: 8px 15px; border-radius: 20px; border: 1px solid #ddd; outline: none; font-size: 13px; }
+    .search-input:focus { border-color: var(--primary); }
 
     @media (max-width: 1024px) { .chart-container { grid-template-columns: 1fr; } .content-section { height: 220px; } }
     @media (max-width: 768px) {
@@ -217,6 +221,8 @@
       .filters { grid-template-columns: 1fr; }
       .detail-row-content { grid-template-columns: 1fr; }
       .mobile-menu { display: flex; }
+      .search-input { width: 100% !important; margin-top: 10px; }
+      .toolbar { flex-direction: column; align-items: flex-start; }
     }
   </style>
 </head>
@@ -251,7 +257,7 @@
           <option value="tick">Ticketing</option>
           <option value="onboard">Onboarding</option>
           <option value="enroll">Enrollment</option>
-          <option value="nsdc">NSDC</option>
+          <option value="students">Student Database</option> <option value="nsdc">NSDC</option>
           <option value="tasks">Tasks</option>
           <option value="report">Reports</option>
         </select>
@@ -269,7 +275,7 @@
             <li id="m-tick" data-view="tick">Ticketing</li>
             <li id="m-onboard" data-view="onboard">Onboarding</li>
             <li id="m-enroll" data-view="enroll">Onboarding Data</li>
-            <li id="m-nsdc" data-view="nsdc">NSDC / Certificate</li>
+            <li id="m-students" data-view="students">Student Database</li> <li id="m-nsdc" data-view="nsdc">NSDC / Certificate</li>
             <li id="m-tasks" data-view="tasks">Daily Tasks</li>
             <li id="m-report" data-view="report">Analytics Reports</li>
           </ul>
@@ -363,6 +369,19 @@
           </div>
         </div>
 
+        <div id="view-students" class="hidden">
+          <div class="toolbar">
+            <h3 style="margin: 0; color: var(--secondary);">Master Student Database</h3>
+            <input type="text" id="student-search" class="search-input" placeholder="🔍 Search Name, Phone or Email...">
+          </div>
+          <div class="table-wrapper" style="margin-top: 0;">
+            <table>
+              <thead><tr><th>Name</th><th>Phone Number</th><th>Email Address</th><th>Course</th><th>Date/Batch</th><th>Status</th></tr></thead>
+              <tbody id="students-body"></tbody>
+            </table>
+          </div>
+        </div>
+
         <div id="view-nsdc" class="hidden">
           <div style="display: flex; gap: 15px; margin-bottom: 20px;">
             <button class="btn-apply" style="background: var(--blue);" data-nsdc-type="Enrollment">NSDC Enrollment</button>
@@ -415,7 +434,6 @@
   </div>
 
   <script>
-    // 🔗 API URL - Do NOT change this unless you deploy a new backend
     const API_URL = "https://script.google.com/macros/s/AKfycbzZvoyP-WOdDdUFmktk3XS79mIOkq7sWjAcBBXWthAQBwHmMBJRP33PUE_qkusfqxWb/exec";
 
     const theme = { orange: "#ff7b2c", navy: "#1f2235", blue: "#3498db", light: "#f0f2f5", purple: "#9b59b6", success: "#2ecc71", danger: "#e74c3c", warning: "#f39c12" };
@@ -443,14 +461,12 @@
       btn.textContent = "Verifying...";
       btn.disabled = true;
 
-      // Backend API call expecting `{ action: 'login', data: { email, password } }`
       const res = await apiPost("login", { email, password });
 
       btn.textContent = originalText;
       btn.disabled = false;
 
       if (res && res.success) {
-        // Success: Hide Login, Show App Container
         $("login-container").classList.add("hidden");
         $("app-container").classList.remove("hidden");
         
@@ -464,7 +480,6 @@
           showConfirmButton: false
         });
 
-        // 🔥 Only Initialize Data AFTER successful login
         initApp();
       } else {
         Swal.fire({
@@ -476,18 +491,15 @@
     }
 
     function handleLogout() {
-      // Clear inputs
       $("login-email").value = "";
       $("login-password").value = "";
       
-      // Hide App, Show Login
       $("app-container").classList.add("hidden");
       $("login-container").classList.remove("hidden");
 
       Swal.fire({ icon: "info", title: "Logged Out", text: "You have securely logged out.", timer: 1500, showConfirmButton: false });
     }
 
-    // Bind Login Events
     $("btn-login-submit").addEventListener("click", handleLogin);
     $("login-password").addEventListener("keypress", (e) => { if (e.key === "Enter") handleLogin(); });
     $("sidebar-logout-btn").addEventListener("click", handleLogout);
@@ -503,6 +515,7 @@
       tick: { title: "TICKETING", loader: loadTickets },
       onboard: { title: "ONBOARDING", loader: loadOnboardTable },
       enroll: { title: "ONBOARDING DATA", loader: loadEnrollData },
+      students: { title: "STUDENT DATABASE", loader: loadStudentDatabase }, // NEW
       nsdc: { title: "NSDC / CERTIFICATE", loader: loadNsdcData },
       tasks: { title: "DAILY TASKS", loader: loadTasks },
       report: { title: "ANALYTICS REPORTS", loader: loadReportsData }
@@ -511,7 +524,7 @@
     function cacheElements() {
       [ "page-title", "total", "untouched-count", "solved-count", "onboard-count", "enrolled-count",
         "dash-session", "dash-rating", "dash-start", "dash-end", "feed-session", "feed-rating", "feed-start", "feed-end",
-        "feed-body", "tick-body", "onboard-body", "enroll-body", "nsdc-body", "tasks-body",
+        "feed-body", "tick-body", "onboard-body", "enroll-body", "students-body", "student-search", "nsdc-body", "tasks-body",
         "rep-session", "rep-group", "rep-start", "rep-end", "rep-nps-body", "rep-trainer-body", "rep-ops-body",
         "task-name", "task-exec", "task-status", "mobile-view-select"
       ].forEach((id) => { el[id] = $(id); });
@@ -711,6 +724,34 @@
       setSyncing(false);
     }
 
+    // 🚀 NEW: STUDENT DATABASE LOADER
+    async function loadStudentDatabase() {
+      setSyncing(true);
+      const list = await apiGet("getStudentDatabase");
+      const rows = (list && !list.error ? list : []).map((s) => `
+        <tr class="student-row">
+          <td><strong>${escapeHtml(s.name)}</strong></td>
+          <td>${escapeHtml(s.phone)}</td>
+          <td>${escapeHtml(s.email)}</td>
+          <td>${makeBadge(s.course, theme.blue)}</td>
+          <td>${escapeHtml(s.date)}</td>
+          <td>${makeBadge(s.status, s.status.toLowerCase() === 'active' ? theme.success : theme.danger)}</td>
+        </tr>
+      `);
+      el["students-body"].innerHTML = rowOrEmpty(rows, 6, "No Student Data Found");
+      setSyncing(false);
+    }
+
+    // 🔍 NEW: SEARCH FILTER LOGIC FOR STUDENT DB
+    function filterStudents(e) {
+      const input = e.target.value.toLowerCase();
+      const rows = $$("#students-body tr.student-row");
+      rows.forEach(row => {
+        const text = row.innerText.toLowerCase();
+        row.style.display = text.includes(input) ? "" : "none";
+      });
+    }
+
     async function openNsdcModal(type) {
       const { value } = await Swal.fire({
         title: type, showCancelButton: true, confirmButtonColor: type === "Enrollment" ? theme.blue : theme.success, cancelButtonColor: "#aaa", confirmButtonText: "Save Data",
@@ -793,6 +834,10 @@
       $("dash-apply").addEventListener("click", loadDashboardData); $("feed-apply").addEventListener("click", loadFeedbackData); $("rep-apply").addEventListener("click", loadReportsData);
       $("raise-ticket-btn").addEventListener("click", openTicketModal); $("open-enroll-btn").addEventListener("click", openEnrollModal); $("add-task-btn").addEventListener("click", submitTask);
       $$("[data-nsdc-type]").forEach((b) => { b.addEventListener("click", () => openNsdcModal(b.dataset.nsdcType)); });
+      
+      // SEARCH BINDING
+      if($("student-search")) { $("student-search").addEventListener("keyup", filterStudents); }
+
       el["tick-body"].addEventListener("click", (e) => {
         const toggleRow = e.target.closest("[data-toggle-row]"); if (toggleRow) { toggleDetails(toggleRow.dataset.toggleRow); return; }
         const editButton = e.target.closest(".edit-ticket-btn"); if (editButton) { const ticket = JSON.parse(decodeURIComponent(editButton.dataset.ticket)); openEditModal(ticket); }
