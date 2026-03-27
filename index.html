@@ -676,67 +676,77 @@
       button.style.transform = isHidden ? "rotate(90deg)" : "rotate(0deg)";
     }
 
-    async function loadStudentDatabase() {
-      setSyncing(true);
-      const list = await apiGet("getStudentDatabase");
-      const rows = (list && !list.error ? list : []).map((s, index) => {
-        // Fallback IDs agar backend abhi tak purana data bhej raha hai
-        const uniqueId = s.rowId || index; 
-        const counsellorName = s.counsellor || "Not Assigned / Backend Update Pending";
+   // 1. Add this near the top of your script with your other variables
+let globalStudentData = [];
 
-        return `
-        <tr class="student-row" style="cursor:pointer;" data-toggle-std="${uniqueId}">
-          <td style="text-align:center;">
-            <button id="btn-std-${uniqueId}" class="toggle-btn" style="pointer-events:none;">▶</button>
-          </td>
-          <td><strong>${escapeHtml(s.name)}</strong></td>
-          <td>${escapeHtml(s.phone)}</td>
-          <td>${escapeHtml(s.email)}</td>
-          <td>${makeBadge(s.course, theme.blue)}</td>
-          <td>${escapeHtml(s.date)}</td>
-        </tr>
-        <tr id="details-std-${uniqueId}" style="display:none;">
-          <td colspan="6" style="padding:0; border-bottom:1px solid #eee;">
-            <div class="detail-row-student">
-              <p style="margin:5px 0; font-size:13px; line-height:1.5;"><strong>📍 Address:</strong> ${escapeHtml(s.address)}</p>
-              <p style="margin:5px 0; font-size:13px; margin-top:10px;"><strong>👤 Counsellor Name:</strong> ${escapeHtml(counsellorName)}</p>
-            </div>
-          </td>
-        </tr>
-        `;
-      });
-      el["students-body"].innerHTML = rowOrEmpty(rows, 6, "No Student Data Found");
-      setSyncing(false);
-    }
-
- // Variable to hold our typing timer
-let searchTimeout;
-
-function filterStudents(e) {
-  // Clear the timer if the user is still typing
-  clearTimeout(searchTimeout);
+// 2. Replace your loadStudentDatabase function:
+async function loadStudentDatabase() {
+  setSyncing(true);
+  const list = await apiGet("getStudentDatabase");
   
-  // Wait 300 milliseconds after the user stops typing to run the search
-  searchTimeout = setTimeout(() => {
-    const input = e.target.value.toLowerCase();
-    const rows = $$("#students-body tr.student-row");
-    
-    rows.forEach(row => {
-      // 🚀 Swap innerText for textContent! This is significantly faster.
-      const text = row.textContent.toLowerCase();
-      const detailRow = $("details-std-" + row.dataset.toggleStd);
-      
-      if (text.includes(input)) {
-        row.style.display = "";
-      } else {
-        row.style.display = "none";
-        // Also hide the detail row if it exists
-        if (detailRow) detailRow.style.display = "none"; 
-      }
-    });
-  }, 300); // 300ms delay
+  // Store the raw data in our global variable
+  globalStudentData = list && !list.error ? list : []; 
+  
+  // Draw the table
+  renderStudentTable(globalStudentData); 
+  setSyncing(false);
 }
 
+// 3. Add this helper function to draw the table:
+function renderStudentTable(dataToRender) {
+  const rows = dataToRender.map((s, index) => {
+    const uniqueId = s.rowId || index; 
+    const counsellorName = s.counsellor || "Not Assigned / Backend Update Pending";
+
+    return `
+    <tr class="student-row" style="cursor:pointer;" data-toggle-std="${uniqueId}">
+      <td style="text-align:center;">
+        <button id="btn-std-${uniqueId}" class="toggle-btn" style="pointer-events:none;">▶</button>
+      </td>
+      <td><strong>${escapeHtml(s.name)}</strong></td>
+      <td>${escapeHtml(s.phone)}</td>
+      <td>${escapeHtml(s.email)}</td>
+      <td>${makeBadge(s.course, theme.blue)}</td>
+      <td>${escapeHtml(s.date)}</td>
+    </tr>
+    <tr id="details-std-${uniqueId}" style="display:none;">
+      <td colspan="6" style="padding:0; border-bottom:1px solid #eee;">
+        <div class="detail-row-student">
+          <p style="margin:5px 0; font-size:13px; line-height:1.5;"><strong>📍 Address:</strong> ${escapeHtml(s.address)}</p>
+          <p style="margin:5px 0; font-size:13px; margin-top:10px;"><strong>👤 Counsellor Name:</strong> ${escapeHtml(counsellorName)}</p>
+        </div>
+      </td>
+    </tr>
+    `;
+  });
+  
+  $("students-body").innerHTML = rows.length ? rows.join("") : `<tr><td colspan="6" style="text-align:center;">No Matches Found</td></tr>`;
+}
+
+// 4. Replace your filterStudents function:
+let searchTimeout;
+function filterStudents(e) {
+  clearTimeout(searchTimeout);
+  searchTimeout = setTimeout(() => {
+    const input = e.target.value.toLowerCase().trim();
+    
+    // If search box is empty, show everyone
+    if (!input) {
+      renderStudentTable(globalStudentData);
+      return;
+    }
+
+    // ⚡ Search the array in memory, NOT the DOM! (Instant)
+    const filteredData = globalStudentData.filter(s => {
+      // Combine the fields you want to be searchable into one string
+      const searchableText = `${s.name} ${s.phone} ${s.email} ${s.course}`.toLowerCase();
+      return searchableText.includes(input);
+    });
+
+    // Draw only the matching students
+    renderStudentTable(filteredData);
+  }, 300);
+}
     async function openNsdcModal(type) {
       const { value } = await Swal.fire({
         title: type, showCancelButton: true, confirmButtonColor: type === "Enrollment" ? theme.blue : theme.success, cancelButtonColor: "#aaa", confirmButtonText: "Save Data",
