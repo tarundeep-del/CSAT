@@ -28,61 +28,49 @@
 
     * { box-sizing: border-box; }
 
-    body {
-      margin: 0;
-      font-family: "Segoe UI", Tahoma, sans-serif;
-      background: var(--bg);
-      color: #333;
-      overflow-x: hidden;
-    }
+    body { margin: 0; font-family: "Segoe UI", Tahoma, sans-serif; background: var(--bg); color: #333; overflow-x: hidden; }
 
     /* --- LOGIN SCREEN STYLES --- */
-    .login-wrapper {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      height: 100vh;
-      background: var(--bg);
-      padding: 20px;
-    }
-
-    .login-box {
-      background: var(--panel);
-      padding: 40px;
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      width: 100%;
-      max-width: 400px;
-      text-align: center;
-    }
-
+    .login-wrapper { display: flex; align-items: center; justify-content: center; height: 100vh; background: var(--bg); padding: 20px; }
+    .login-box { background: var(--panel); padding: 40px; border-radius: var(--radius); box-shadow: var(--shadow); width: 100%; max-width: 400px; text-align: center; }
     .login-box h2 { color: var(--primary); margin: 0 0 10px; font-size: 1.8rem; font-weight: 800; }
     .login-box p { color: var(--muted); margin-bottom: 25px; font-size: 14px; }
     .login-input-group { margin-bottom: 20px; text-align: left; }
     .login-input-group label { display: block; margin-bottom: 8px; font-size: 13px; font-weight: 700; color: var(--secondary); }
     .login-input-group input { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; outline: none; transition: border 0.3s; }
     .login-input-group input:focus { border-color: var(--primary); }
-
     .btn-login { width: 100%; background: var(--primary); color: #fff; border: none; padding: 12px; border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: 700; transition: opacity 0.3s; }
     .btn-login:hover { opacity: 0.9; }
     .btn-login:disabled { background: #aaa; cursor: not-allowed; }
 
     /* --- DASHBOARD STYLES --- */
     .layout { display: flex; min-height: 100vh; }
-
-    .sidebar {
-      width: 220px; background: var(--secondary); color: #fff; padding: 20px; position: fixed; height: 100vh; z-index: 1000; overflow-y: auto; display: flex; flex-direction: column;
-    }
-
+    .sidebar { width: 220px; background: var(--secondary); color: #fff; padding: 20px; position: fixed; height: 100vh; z-index: 1000; overflow-y: auto; display: flex; flex-direction: column; }
     .sidebar h2 { color: var(--primary); margin: 0 0 30px; font-size: 1.4rem; font-weight: 800; border-bottom: 1px solid rgba(255, 255, 255, 0.1); padding-bottom: 15px; }
+    
+    /* MAIN MENU LIST STYLES */
     .sidebar ul { list-style: none; padding: 0; margin: 0; flex: 1; }
     .sidebar li { padding: 12px 15px; cursor: pointer; opacity: 0.8; border-radius: 8px; margin-bottom: 10px; transition: 0.2s; font-weight: 500; }
     .sidebar li.active { background: var(--primary); opacity: 1; box-shadow: 0 4px 10px rgba(255, 123, 44, 0.3); }
     .sidebar li:hover:not(.active) { background: rgba(255, 255, 255, 0.1); opacity: 1; }
 
+    /* COLLAPSIBLE DROPDOWN STYLES (NEW) */
+    .sidebar li.menu-group { padding: 0; margin-bottom: 10px; background: transparent !important; opacity: 1; cursor: default; }
+    .sidebar li.menu-group:hover { background: transparent !important; box-shadow: none; }
+    .menu-title { padding: 12px 15px; cursor: pointer; opacity: 0.8; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; transition: 0.2s; font-weight: 600; }
+    .menu-title:hover { background: rgba(255, 255, 255, 0.1); opacity: 1; }
+    .menu-group.open .menu-title { background: rgba(0, 0, 0, 0.2); opacity: 1; }
+    .menu-group.open .chevron { transform: rotate(180deg); }
+    .chevron { font-size: 10px; transition: transform 0.3s; }
+    .submenu { display: none; list-style: none; padding: 5px 0 !important; margin: 5px 0 0 0 !important; background: rgba(0, 0, 0, 0.15); border-radius: 8px; }
+    .menu-group.open .submenu { display: block; }
+    .submenu li { padding: 10px 15px 10px 35px !important; margin-bottom: 2px !important; border-radius: 0 !important; font-size: 13.5px; box-shadow: none !important;}
+    .submenu li:last-child { margin-bottom: 0 !important; }
+    .submenu li.active { background: var(--primary) !important; opacity: 1 !important; border-radius: 6px !important; margin: 0 5px !important; padding-left: 30px !important;}
+
+    /* MAIN CONTENT STYLES */
     .main { flex: 1; margin-left: 240px; padding: 30px; width: calc(100% - 240px); }
     .filters, .toolbar, .table-wrapper, .content-section, .form-section, .card { background: var(--panel); border-radius: var(--radius); box-shadow: var(--shadow); }
-
     .filters { padding: 20px; margin-bottom: 25px; display: grid; grid-template-columns: 2fr 1fr 1.2fr 1.2fr auto; gap: 15px; align-items: flex-end; }
     .filter-group { display: flex; flex-direction: column; gap: 6px; font-size: 12px; font-weight: 700; color: var(--secondary); }
     select, input { padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; outline: none; width: 100%; height: 40px; }
@@ -119,16 +107,12 @@
     .toggle-btn { background: none; border: none; cursor: pointer; font-size: 12px; color: var(--secondary); transition: transform 0.3s; padding: 5px; }
     .main-row:hover, .student-row:hover { background: #f8f9fa; }
     
-    /* Used for Ticketing Details */
     .detail-row-content { display: grid; grid-template-columns: 1fr 1fr auto; gap: 20px; padding: 20px; background: #fafbfc; border-left: 4px solid var(--primary); box-shadow: inset 0 3px 6px rgba(0, 0, 0, 0.02); margin: 0; }
-    
-    /* Used for Student Details */
     .detail-row-student { display: grid; grid-template-columns: 1fr; padding: 15px 25px; background: #fafbfc; border-left: 4px solid var(--primary); margin: 0; }
 
     .mobile-menu { display: none; background: var(--secondary); color: #fff; padding: 15px; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 999; }
     .mobile-menu select { width: 60%; background: #fff; color: #000; border: none; padding: 8px; }
 
-    /* STUDENT SEARCH BAR STYLES */
     .search-input { width: 250px !important; padding: 8px 15px; border-radius: 20px; border: 1px solid #ddd; outline: none; font-size: 13px; }
     .search-input:focus { border-color: var(--primary); }
 
@@ -150,17 +134,8 @@
     <div class="login-box">
       <h2>CSAT Portal</h2>
       <p>Please sign in to access the dashboard</p>
-      
-      <div class="login-input-group">
-        <label for="login-email">Email Address</label>
-        <input type="email" id="login-email" placeholder="Enter your email" />
-      </div>
-      
-      <div class="login-input-group">
-        <label for="login-password">Password</label>
-        <input type="password" id="login-password" placeholder="Enter your password" />
-      </div>
-      
+      <div class="login-input-group"><label for="login-email">Email Address</label><input type="email" id="login-email" placeholder="Enter your email" /></div>
+      <div class="login-input-group"><label for="login-password">Password</label><input type="password" id="login-password" placeholder="Enter your password" /></div>
       <button class="btn-login" id="btn-login-submit">Login</button>
     </div>
   </div>
@@ -173,10 +148,15 @@
           <option value="dash">Dashboard</option>
           <option value="feed">Feedback</option>
           <option value="tick">Ticketing</option>
-          <option value="onboard">Onboarding</option>
-          <option value="enroll">Enrollment</option>
-          <option value="students">Student Database</option>
-          <option value="state">State Data</option> <option value="nsdc">NSDC</option>
+          <optgroup label="Onboarding">
+            <option value="onboard">Registered in App</option>
+            <option value="enroll">Onboarding Data</option>
+          </optgroup>
+          <optgroup label="Student Database">
+            <option value="students">Master Database</option>
+            <option value="state">State Data</option>
+          </optgroup>
+          <option value="nsdc">NSDC</option>
           <option value="tasks">Tasks</option>
           <option value="report">Reports</option>
         </select>
@@ -192,10 +172,24 @@
             <li id="m-dash" class="active" data-view="dash">Dashboard</li>
             <li id="m-feed" data-view="feed">Feedback</li>
             <li id="m-tick" data-view="tick">Ticketing</li>
-            <li id="m-onboard" data-view="onboard">Onboarding</li>
-            <li id="m-enroll" data-view="enroll">Onboarding Data</li>
-            <li id="m-students" data-view="students">Student Database</li>
-            <li id="m-state" data-view="state">State Data</li> <li id="m-nsdc" data-view="nsdc">NSDC / Certificate</li>
+
+            <li class="menu-group">
+              <div class="menu-title">Onboarding <span class="chevron">▼</span></div>
+              <ul class="submenu">
+                <li id="m-onboard" data-view="onboard">Registered in App</li>
+                <li id="m-enroll" data-view="enroll">Onboarding Data</li>
+              </ul>
+            </li>
+
+            <li class="menu-group">
+              <div class="menu-title">Student Database <span class="chevron">▼</span></div>
+              <ul class="submenu">
+                <li id="m-students" data-view="students">Master Database</li>
+                <li id="m-state" data-view="state">State Data</li>
+              </ul>
+            </li>
+
+            <li id="m-nsdc" data-view="nsdc">NSDC / Certificate</li>
             <li id="m-tasks" data-view="tasks">Daily Tasks</li>
             <li id="m-report" data-view="report">Analytics Reports</li>
           </ul>
@@ -218,7 +212,6 @@
             <div class="filter-group">End<input type="date" id="dash-end" /></div>
             <button class="btn-apply" id="dash-apply">Apply Filters</button>
           </div>
-
           <div class="cards">
             <div class="card total-feedback"><h3>Total Feedback</h3><h2 id="total">0</h2></div>
             <div class="card untouched"><h3>Untouched Tickets</h3><h2 id="untouched-count">0</h2></div>
@@ -226,7 +219,6 @@
             <div class="card onboarding-card"><h3>Pending Enrollment</h3><h2 id="onboard-count">0</h2></div>
             <div class="card enrolled-card"><h3>Enrolled Count</h3><h2 id="enrolled-count">0</h2></div>
           </div>
-
           <div class="chart-container">
             <div class="content-section" style="height: 180px;"><canvas id="gaugeChart"></canvas></div>
             <div class="content-section" style="height: 180px;"><canvas id="distChart"></canvas></div>
@@ -369,7 +361,6 @@
             <div class="filter-group">End<input type="date" id="rep-end" /></div>
             <button class="btn-apply" id="rep-apply">Generate Report</button>
           </div>
-
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
             <div class="table-wrapper" style="margin-top: 0;"><h3 style="margin-top: 0; color: var(--primary);">1. Session-wise NPS Report</h3><table><thead><tr><th>Session Name</th><th>Total Feedback</th><th>NPS Score</th></tr></thead><tbody id="rep-nps-body"></tbody></table></div>
             <div class="table-wrapper" style="margin-top: 0;"><h3 style="margin-top: 0; color: var(--blue);">2. Trainer Performance</h3><table><thead><tr><th>Trainer Name</th><th>Feedback Count</th><th>Trainer NPS</th></tr></thead><tbody id="rep-trainer-body"></tbody></table></div>
@@ -393,9 +384,9 @@
     const charts = { gauge: null, dist: null, onboarding: null };
 
     // ==========================================
-    // 🔐 LOGIN & AUTHENTICATION SYSTEM (8-Hour Keep Alive)
+    // 🔐 LOGIN & AUTHENTICATION
     // ==========================================
-    const SESSION_TIMEOUT = 28800000; // 8 Hours in ms
+    const SESSION_TIMEOUT = 28800000; 
 
     function showDashboard(user) {
       $("login-container").classList.add("hidden");
@@ -407,60 +398,31 @@
     function checkSavedSession() {
       const savedUser = localStorage.getItem("csat_user");
       const loginTime = localStorage.getItem("csat_time");
-
       if (savedUser && loginTime) {
-        const timePassed = Date.now() - parseInt(loginTime);
-        if (timePassed < SESSION_TIMEOUT) {
-          showDashboard(JSON.parse(savedUser));
-        } else {
-          handleLogout(false);
-        }
+        if (Date.now() - parseInt(loginTime) < SESSION_TIMEOUT) { showDashboard(JSON.parse(savedUser)); } 
+        else { handleLogout(false); }
       }
     }
 
     async function handleLogin() {
-      const email = $("login-email").value.trim();
-      const password = $("login-password").value.trim();
-
-      if (!email || !password) {
-        Swal.fire({ icon: "warning", title: "Wait!", text: "Please enter both Email and Password." });
-        return;
-      }
-
-      const btn = $("btn-login-submit");
-      const originalText = btn.textContent;
-      btn.textContent = "Verifying...";
-      btn.disabled = true;
-
+      const email = $("login-email").value.trim(), password = $("login-password").value.trim();
+      if (!email || !password) { Swal.fire({ icon: "warning", title: "Wait!", text: "Please enter both Email and Password." }); return; }
+      const btn = $("btn-login-submit"); const originalText = btn.textContent; btn.textContent = "Verifying..."; btn.disabled = true;
       const res = await apiPost("login", { email, password });
-
-      btn.textContent = originalText;
-      btn.disabled = false;
+      btn.textContent = originalText; btn.disabled = false;
 
       if (res && res.success) {
-        localStorage.setItem("csat_user", JSON.stringify(res.user));
-        localStorage.setItem("csat_time", Date.now().toString());
-
+        localStorage.setItem("csat_user", JSON.stringify(res.user)); localStorage.setItem("csat_time", Date.now().toString());
         Swal.fire({ icon: "success", title: "Welcome, " + res.user.name + "!", text: "Logging into your dashboard...", timer: 1500, showConfirmButton: false });
         showDashboard(res.user);
-      } else {
-        Swal.fire({ icon: "error", title: "Access Denied", text: res.error || "Invalid Email or Password. Please try again." });
-      }
+      } else { Swal.fire({ icon: "error", title: "Access Denied", text: res.error || "Invalid Email or Password. Please try again." }); }
     }
 
     function handleLogout(showAlert = true) {
-      localStorage.removeItem("csat_user");
-      localStorage.removeItem("csat_time");
-      
-      $("login-email").value = "";
-      $("login-password").value = "";
-      
-      $("app-container").classList.add("hidden");
-      $("login-container").classList.remove("hidden");
-
-      if (showAlert) {
-        Swal.fire({ icon: "info", title: "Logged Out", text: "You have securely logged out.", timer: 1500, showConfirmButton: false });
-      }
+      localStorage.removeItem("csat_user"); localStorage.removeItem("csat_time");
+      $("login-email").value = ""; $("login-password").value = "";
+      $("app-container").classList.add("hidden"); $("login-container").classList.remove("hidden");
+      if (showAlert) Swal.fire({ icon: "info", title: "Logged Out", text: "You have securely logged out.", timer: 1500, showConfirmButton: false });
     }
 
     $("btn-login-submit").addEventListener("click", handleLogin);
@@ -469,17 +431,16 @@
     $("mobile-logout-btn").addEventListener("click", handleLogout);
 
     // ==========================================
-    // ⚙️ DASHBOARD CORE LOGIC
+    // ⚙️ VIEW CONFIGURATION & HELPERS
     // ==========================================
-
     const viewConfig = {
       dash: { title: "DASHBOARD", loader: loadDashboardData },
       feed: { title: "FEEDBACK", loader: loadFeedbackData },
       tick: { title: "TICKETING", loader: loadTickets },
-      onboard: { title: "ONBOARDING", loader: loadOnboardTable },
-      enroll: { title: "ONBOARDING DATA", loader: loadEnrollData },
-      students: { title: "STUDENT DATABASE", loader: loadStudentDatabase },
-      state: { title: "STATE DATA", loader: loadStateData }, // NEW ROUTE
+      onboard: { title: "ONBOARDING: APP", loader: loadOnboardTable },
+      enroll: { title: "ONBOARDING: DATA", loader: loadEnrollData },
+      students: { title: "MASTER STUDENT DATABASE", loader: loadStudentDatabase },
+      state: { title: "STATE DATA", loader: loadStateData },
       nsdc: { title: "NSDC / CERTIFICATE", loader: loadNsdcData },
       tasks: { title: "DAILY TASKS", loader: loadTasks },
       report: { title: "ANALYTICS REPORTS", loader: loadReportsData }
@@ -494,10 +455,7 @@
       ].forEach((id) => { el[id] = $(id); });
     }
 
-    function escapeHtml(value) {
-      return String(value ?? "").replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[char]));
-    }
-
+    function escapeHtml(value) { return String(value ?? "").replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[char])); }
     function makeBadge(text, background, extraStyle = "") { return `<span class="badge" style="background:${background};${extraStyle}">${escapeHtml(text)}</span>`; }
     function rowOrEmpty(rows, colspan, message = "No Data Found") { return rows.length ? rows.join("") : `<tr><td colspan="${colspan}" style="text-align:center;">${message}</td></tr>`; }
     function setSyncing(isSyncing) { $$(".card, .content-section, .table-wrapper").forEach((n) => n.classList.toggle("syncing", isSyncing)); }
@@ -506,186 +464,64 @@
       try {
         let response;
         if (method === "GET") {
-          const url = new URL(API_URL);
-          url.searchParams.set("action", action);
+          const url = new URL(API_URL); url.searchParams.set("action", action);
           Object.entries(payload).forEach(([key, value]) => url.searchParams.set(key, value ?? ""));
           response = await fetch(url.toString(), { method: "GET", redirect: "follow", credentials: "omit" });
         } else {
-          response = await fetch(API_URL, {
-            method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" },
-            body: JSON.stringify({ action, data: payload }), redirect: "follow", credentials: "omit"
-          });
+          response = await fetch(API_URL, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify({ action, data: payload }), redirect: "follow", credentials: "omit" });
         }
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         return await response.json();
-      } catch (error) {
-        console.error(`${method} ${action} failed`, error);
-        return { error: error.message || String(error) };
-      }
+      } catch (error) { return { error: error.message || String(error) }; }
     }
 
     function apiGet(action, params = {}) { return request("GET", action, params); }
     function apiPost(action, data = {}) { return request("POST", action, data); }
-    function destroyChart(name) { if (charts[name]) { charts[name].destroy(); charts[name] = null; } }
 
+    // ==========================================
+    // 📊 DATA LOADERS
+    // ==========================================
+    function destroyChart(name) { if (charts[name]) { charts[name].destroy(); charts[name] = null; } }
     function renderCharts(stats) {
       destroyChart("gauge"); destroyChart("dist");
-      const centerPlugin = {
-        id: "centerPlugin",
-        afterDraw(chart) {
-          const { ctx, chartArea } = chart; const { top, bottom, left, right, height } = chartArea;
-          const centerX = (left + right) / 2; const centerY = (top + bottom) / 2;
-          ctx.save(); ctx.textAlign = "center"; ctx.textBaseline = "middle";
-          ctx.font = `bold ${(height / 3).toFixed(0)}px Segoe UI`; ctx.fillStyle = "#000";
-          ctx.fillText(stats.nps, centerX, centerY + (height / 8));
-          ctx.font = `600 ${(height / 8).toFixed(0)}px Segoe UI`; ctx.fillStyle = "#888";
-          ctx.fillText("CSAT", centerX, centerY + (height / 3.2)); ctx.restore();
-        }
-      };
-
-      charts.gauge = new Chart($("gaugeChart"), {
-        type: "doughnut",
-        data: { datasets: [{ data: [stats.nps + 100, 200 - (stats.nps + 100)], backgroundColor: [theme.orange, theme.light], borderWidth: 0, cutout: "82%" }] },
-        options: { responsive: true, maintainAspectRatio: false, rotation: -90, circumference: 180, plugins: { legend: { display: false }, datalabels: { display: false } } },
-        plugins: [centerPlugin]
-      });
-
-      charts.dist = new Chart($("distChart"), {
-        type: "pie",
-        data: { labels: [`Promoters: ${stats.promoters}`, `Passives: ${stats.passives}`, `Detractors: ${stats.detractors}`], datasets: [{ data: [stats.promoters, stats.passives, stats.detractors], backgroundColor: [theme.orange, "#cbd5e1", theme.navy] }] },
-        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: "right", labels: { boxWidth: 12, font: { size: 13, weight: "bold" } } }, datalabels: { display: false } } }
-      });
+      const centerPlugin = { id: "centerPlugin", afterDraw(chart) { const { ctx, chartArea } = chart; const { top, bottom, left, right, height } = chartArea; const centerX = (left + right) / 2; const centerY = (top + bottom) / 2; ctx.save(); ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.font = `bold ${(height / 3).toFixed(0)}px Segoe UI`; ctx.fillStyle = "#000"; ctx.fillText(stats.nps, centerX, centerY + (height / 8)); ctx.font = `600 ${(height / 8).toFixed(0)}px Segoe UI`; ctx.fillStyle = "#888"; ctx.fillText("CSAT", centerX, centerY + (height / 3.2)); ctx.restore(); } };
+      charts.gauge = new Chart($("gaugeChart"), { type: "doughnut", data: { datasets: [{ data: [stats.nps + 100, 200 - (stats.nps + 100)], backgroundColor: [theme.orange, theme.light], borderWidth: 0, cutout: "82%" }] }, options: { responsive: true, maintainAspectRatio: false, rotation: -90, circumference: 180, plugins: { legend: { display: false }, datalabels: { display: false } } }, plugins: [centerPlugin] });
+      charts.dist = new Chart($("distChart"), { type: "pie", data: { labels: [`Promoters: ${stats.promoters}`, `Passives: ${stats.passives}`, `Detractors: ${stats.detractors}`], datasets: [{ data: [stats.promoters, stats.passives, stats.detractors], backgroundColor: [theme.orange, "#cbd5e1", theme.navy] }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: "right", labels: { boxWidth: 12, font: { size: 13, weight: "bold" } } }, datalabels: { display: false } } } });
     }
 
     function renderOnboardingChart(chartData) {
-      destroyChart("onboarding");
-      const canvas = $("onboardingChart"); const ctx = canvas.getContext("2d");
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      if (!chartData || !chartData.labels || chartData.labels.length === 0) {
-        ctx.font = "14px Segoe UI"; ctx.fillStyle = "#888"; ctx.textAlign = "center";
-        ctx.fillText("No Enrollment Data Available", canvas.width / 2 || 250, 100); return;
-      }
-      charts.onboarding = new Chart(canvas, {
-        type: "line",
-        data: { labels: chartData.labels, datasets: [{ label: "Enrollments", data: chartData.data, borderColor: theme.blue, backgroundColor: "rgba(52, 152, 219, 0.2)", borderWidth: 2, fill: true, tension: 0.3, pointBackgroundColor: theme.blue, pointRadius: 4 }] },
-        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, datalabels: { display: true, align: "top", color: theme.navy, font: { weight: "bold", size: 11 } } }, scales: { y: { beginAtZero: true, grid: { color: "#eee" }, ticks: { stepSize: 1 } }, x: { grid: { display: false } } } }
-      });
+      destroyChart("onboarding"); const canvas = $("onboardingChart"); const ctx = canvas.getContext("2d"); ctx.clearRect(0, 0, canvas.width, canvas.height);
+      if (!chartData || !chartData.labels || chartData.labels.length === 0) { ctx.font = "14px Segoe UI"; ctx.fillStyle = "#888"; ctx.textAlign = "center"; ctx.fillText("No Enrollment Data Available", canvas.width / 2 || 250, 100); return; }
+      charts.onboarding = new Chart(canvas, { type: "line", data: { labels: chartData.labels, datasets: [{ label: "Enrollments", data: chartData.data, borderColor: theme.blue, backgroundColor: "rgba(52, 152, 219, 0.2)", borderWidth: 2, fill: true, tension: 0.3, pointBackgroundColor: theme.blue, pointRadius: 4 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, datalabels: { display: true, align: "top", color: theme.navy, font: { weight: "bold", size: 11 } } }, scales: { y: { beginAtZero: true, grid: { color: "#eee" }, ticks: { stepSize: 1 } }, x: { grid: { display: false } } } } });
     }
 
     async function loadDashboardData() {
-      setSyncing(true);
-      const res = await apiGet("getDashboardData", { session: el["dash-session"].value, rating: el["dash-rating"].value, start: el["dash-start"].value, end: el["dash-end"].value });
-      if (res && !res.error) {
-        el["total"].textContent = res.stats.total; el["untouched-count"].textContent = res.untouched; el["solved-count"].textContent = res.solved;
-        el["onboard-count"].textContent = res.onboardCount; el["enrolled-count"].textContent = res.enrolledCount;
-        renderCharts(res.stats); renderOnboardingChart(res.chartData);
-      }
+      setSyncing(true); const res = await apiGet("getDashboardData", { session: el["dash-session"].value, rating: el["dash-rating"].value, start: el["dash-start"].value, end: el["dash-end"].value });
+      if (res && !res.error) { el["total"].textContent = res.stats.total; el["untouched-count"].textContent = res.untouched; el["solved-count"].textContent = res.solved; el["onboard-count"].textContent = res.onboardCount; el["enrolled-count"].textContent = res.enrolledCount; renderCharts(res.stats); renderOnboardingChart(res.chartData); }
       setSyncing(false);
     }
 
     async function loadFeedbackData() {
-      setSyncing(true);
-      const res = await apiGet("getFeedbackData", { session: el["feed-session"].value, rating: el["feed-rating"].value, start: el["feed-start"].value, end: el["feed-end"].value });
+      setSyncing(true); const res = await apiGet("getFeedbackData", { session: el["feed-session"].value, rating: el["feed-rating"].value, start: el["feed-start"].value, end: el["feed-end"].value });
       const rows = (res && res.feedbacks ? res.feedbacks : []).map((r) => `<tr><td>${escapeHtml(r.date)}</td><td>${escapeHtml(r.session)}</td><td><strong>${escapeHtml(r.name)}</strong></td><td>${escapeHtml(r.mobile)}</td><td>${makeBadge(`${r.rating} ★`, theme.orange)}</td><td>${escapeHtml(r.comment)}</td></tr>`);
-      el["feed-body"].innerHTML = rowOrEmpty(rows, 6);
-      setSyncing(false);
+      el["feed-body"].innerHTML = rowOrEmpty(rows, 6); setSyncing(false);
     }
 
-    // Toggle for TICKETING table
-    function toggleDetails(rowId) {
-      const details = $("details-" + rowId); const button = $("btn-" + rowId);
-      if (!details || !button) return;
-      const isHidden = details.style.display === "none" || details.style.display === "";
-      details.style.display = isHidden ? "table-row" : "none"; button.style.transform = isHidden ? "rotate(90deg)" : "rotate(0deg)";
-    }
-
+    /* --- TICKETING, ONBOARD, ENROLL ... --- */
+    function toggleDetails(rowId) { const details = $("details-" + rowId); const button = $("btn-" + rowId); if (!details || !button) return; const isHidden = details.style.display === "none" || details.style.display === ""; details.style.display = isHidden ? "table-row" : "none"; button.style.transform = isHidden ? "rotate(90deg)" : "rotate(0deg)"; }
     async function loadTickets() {
-      setSyncing(true);
-      const list = await apiGet("getTickets");
+      setSyncing(true); const list = await apiGet("getTickets");
       const rows = (list && !list.error ? list : []).map((t) => {
-        const priorityColor = t.priority === "High" || t.priority === "Urgent" ? theme.danger : t.priority === "Medium" ? theme.warning : theme.blue;
-        const statusColor = t.status === "Solved" ? theme.success : t.status === "Escalated" ? theme.warning : theme.danger;
-        const tatHtml = t.tat && t.tat !== "-" && t.tat !== "N/A" ? `<span class="badge" style="background:#3d4466; font-size:11px;">${escapeHtml("⏱️ " + t.tat)}</span>` : `<span style="color:#aaa; font-size:12px; font-weight:600;">Pending</span>`;
-        let issueRemark = t.remark || "-"; let resolutionRemark = "";
-        if (issueRemark.includes("[Res]:")) { const parts = issueRemark.split("[Res]:"); issueRemark = parts[0].trim(); resolutionRemark = parts.slice(1).join("\nUpdate: ").trim(); }
-        const serializedTicket = encodeURIComponent(JSON.stringify(t));
-
-        return `<tr class="main-row" style="cursor:pointer;" data-toggle-row="${t.row}"><td style="text-align:center;"><button id="btn-${t.row}" class="toggle-btn" style="pointer-events:none;">▶</button></td><td>${escapeHtml(t.dateRaised)}</td><td><strong>${escapeHtml(t.name)}</strong></td><td>${escapeHtml(t.course)}</td><td><strong>${escapeHtml(t.issue)}</strong></td><td>${makeBadge(t.status, statusColor)}</td></tr>
-          <tr id="details-${t.row}" style="display:none;"><td colspan="6" style="padding:0; border-bottom:1px solid #eee;"><div class="detail-row-content">
-          <div><h4 style="margin:0 0 10px; font-size:13px; color:var(--secondary); text-transform:uppercase;">Details</h4><p style="margin:5px 0; font-size:13px;"><strong>Phone:</strong> ${escapeHtml(t.phone)}</p><p style="margin:5px 0; font-size:13px;"><strong>Source:</strong> ${escapeHtml(t.source)}</p><p style="margin:5px 0; font-size:13px;"><strong>Assigned To:</strong> ${escapeHtml(t.assigned)}</p><p style="margin:8px 0; font-size:13px;"><strong>Priority:</strong> <span class="badge" style="background:${priorityColor}; font-size:10px; padding:3px 8px;">${escapeHtml(t.priority)}</span></p></div>
-          <div><h4 style="margin:0 0 10px; font-size:13px; color:var(--secondary); text-transform:uppercase;">Timeline & Remarks</h4><p style="margin:5px 0; font-size:13px;"><strong>TAT:</strong> ${tatHtml}</p><p style="margin:5px 0; font-size:13px;"><strong>Resolved On:</strong> ${escapeHtml(t.dateResolved)}</p><div style="margin-top:10px; padding:10px; background:#fff; border-radius:6px; border:1px solid #eee;"><strong style="font-size:12px; color:#888;">Issue:</strong><p style="margin:5px 0 0; font-size:13px;">${escapeHtml(issueRemark)}</p>${resolutionRemark ? `<div style="margin-top:12px; padding-top:10px; border-top:1px dashed #ddd;"><strong style="font-size:12px; color:#888;">Resolution:</strong><p style="margin:5px 0 0; font-size:13px; color:${t.status === "Escalated" ? theme.warning : theme.success}; font-weight:600;">${escapeHtml(resolutionRemark)}</p></div>` : ""}</div></div>
-          <div style="border-left:1px solid #ddd; padding-left:20px; min-width:150px;"><h4 style="margin:0 0 10px; font-size:13px; color:var(--secondary); text-transform:uppercase;">Actions</h4>${t.status === "Solved" ? `<div style="padding-top:10px;"><span style="color:${theme.success}; font-size:13px; font-weight:bold;">✔️ Closed</span></div>` : `<div style="display:flex; flex-direction:column; gap:8px;"><select data-status-row="${t.row}" style="padding:8px; font-size:12px; border:1px solid #ddd; border-radius:5px;"><option value="Untouched" ${t.status === "Untouched" ? "selected" : ""}>Untouched</option><option value="Escalated" ${t.status === "Escalated" ? "selected" : ""}>Escalated</option><option value="Solved" ${t.status === "Solved" ? "selected" : ""}>Solved</option></select><button class="edit-ticket-btn" data-ticket="${serializedTicket}" style="background:var(--primary); border:none; border-radius:5px; padding:8px; cursor:pointer; font-size:12px; font-weight:bold; color:white;">Edit Info</button></div>`}</div></div></td></tr>`;
-      });
-      el["tick-body"].innerHTML = rowOrEmpty(rows, 6);
-      setSyncing(false);
+        const priorityColor = t.priority === "High" || t.priority === "Urgent" ? theme.danger : t.priority === "Medium" ? theme.warning : theme.blue; const statusColor = t.status === "Solved" ? theme.success : t.status === "Escalated" ? theme.warning : theme.danger; const tatHtml = t.tat && t.tat !== "-" && t.tat !== "N/A" ? `<span class="badge" style="background:#3d4466; font-size:11px;">${escapeHtml("⏱️ " + t.tat)}</span>` : `<span style="color:#aaa; font-size:12px; font-weight:600;">Pending</span>`; let issueRemark = t.remark || "-"; let resolutionRemark = ""; if (issueRemark.includes("[Res]:")) { const parts = issueRemark.split("[Res]:"); issueRemark = parts[0].trim(); resolutionRemark = parts.slice(1).join("\nUpdate: ").trim(); } const serializedTicket = encodeURIComponent(JSON.stringify(t));
+        return `<tr class="main-row" style="cursor:pointer;" data-toggle-row="${t.row}"><td style="text-align:center;"><button id="btn-${t.row}" class="toggle-btn" style="pointer-events:none;">▶</button></td><td>${escapeHtml(t.dateRaised)}</td><td><strong>${escapeHtml(t.name)}</strong></td><td>${escapeHtml(t.course)}</td><td><strong>${escapeHtml(t.issue)}</strong></td><td>${makeBadge(t.status, statusColor)}</td></tr><tr id="details-${t.row}" style="display:none;"><td colspan="6" style="padding:0; border-bottom:1px solid #eee;"><div class="detail-row-content"><div><h4 style="margin:0 0 10px; font-size:13px; color:var(--secondary); text-transform:uppercase;">Details</h4><p style="margin:5px 0; font-size:13px;"><strong>Phone:</strong> ${escapeHtml(t.phone)}</p><p style="margin:5px 0; font-size:13px;"><strong>Source:</strong> ${escapeHtml(t.source)}</p><p style="margin:5px 0; font-size:13px;"><strong>Assigned To:</strong> ${escapeHtml(t.assigned)}</p><p style="margin:8px 0; font-size:13px;"><strong>Priority:</strong> <span class="badge" style="background:${priorityColor}; font-size:10px; padding:3px 8px;">${escapeHtml(t.priority)}</span></p></div><div><h4 style="margin:0 0 10px; font-size:13px; color:var(--secondary); text-transform:uppercase;">Timeline & Remarks</h4><p style="margin:5px 0; font-size:13px;"><strong>TAT:</strong> ${tatHtml}</p><p style="margin:5px 0; font-size:13px;"><strong>Resolved On:</strong> ${escapeHtml(t.dateResolved)}</p><div style="margin-top:10px; padding:10px; background:#fff; border-radius:6px; border:1px solid #eee;"><strong style="font-size:12px; color:#888;">Issue:</strong><p style="margin:5px 0 0; font-size:13px;">${escapeHtml(issueRemark)}</p>${resolutionRemark ? `<div style="margin-top:12px; padding-top:10px; border-top:1px dashed #ddd;"><strong style="font-size:12px; color:#888;">Resolution:</strong><p style="margin:5px 0 0; font-size:13px; color:${t.status === "Escalated" ? theme.warning : theme.success}; font-weight:600;">${escapeHtml(resolutionRemark)}</p></div>` : ""}</div></div><div style="border-left:1px solid #ddd; padding-left:20px; min-width:150px;"><h4 style="margin:0 0 10px; font-size:13px; color:var(--secondary); text-transform:uppercase;">Actions</h4>${t.status === "Solved" ? `<div style="padding-top:10px;"><span style="color:${theme.success}; font-size:13px; font-weight:bold;">✔️ Closed</span></div>` : `<div style="display:flex; flex-direction:column; gap:8px;"><select data-status-row="${t.row}" style="padding:8px; font-size:12px; border:1px solid #ddd; border-radius:5px;"><option value="Untouched" ${t.status === "Untouched" ? "selected" : ""}>Untouched</option><option value="Escalated" ${t.status === "Escalated" ? "selected" : ""}>Escalated</option><option value="Solved" ${t.status === "Solved" ? "selected" : ""}>Solved</option></select><button class="edit-ticket-btn" data-ticket="${serializedTicket}" style="background:var(--primary); border:none; border-radius:5px; padding:8px; cursor:pointer; font-size:12px; font-weight:bold; color:white;">Edit Info</button></div>`}</div></div></td></tr>`;
+      }); el["tick-body"].innerHTML = rowOrEmpty(rows, 6); setSyncing(false);
     }
-
-    async function handleStatusChange(row, status) {
-      let remark = "";
-      if (status === "Solved" || status === "Escalated") {
-        const { value } = await Swal.fire({ title: status === "Solved" ? "Resolution Remark" : "Escalation Reason", input: "text", showCancelButton: true, confirmButtonColor: status === "Solved" ? theme.success : theme.warning });
-        if (value) remark = value; else if (value === undefined) { await loadTickets(); return; }
-      }
-      setSyncing(true); await apiPost("updateTicketStatus", { row, status, remark }); await loadTickets(); setSyncing(false);
-      Swal.fire({ icon: "success", title: "Updated!", showConfirmButton: false, timer: 1500 });
-    }
-
-    async function openTicketModal() {
-      const { value } = await Swal.fire({
-        title: "", width: "550px", showCancelButton: true, confirmButtonText: "Submit Ticket", cancelButtonText: "Cancel", confirmButtonColor: theme.orange, cancelButtonColor: "#aaa",
-        html: `<div style="text-align: center; margin-bottom: 20px; padding-top: 10px;"><h2 style="margin: 0; color: var(--secondary); font-size: 24px; font-weight: 800;">Raise a Support Ticket 🎫</h2><p style="color: #888; font-size: 14px; margin-top: 5px;">Fill out the form below</p></div><div style="text-align: left;"><div style="margin-bottom: 15px;"><label style="display: block; margin-bottom: 5px; font-size: 13px; font-weight: 700; color: var(--secondary);">Full Name *</label><input id="s-n" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px; box-sizing:border-box; font-family: inherit;" placeholder="Enter your full name"></div><div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;"><div><label style="display: block; margin-bottom: 5px; font-size: 13px; font-weight: 700; color: var(--secondary);">Phone Number *</label><input id="s-p" type="tel" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px; box-sizing:border-box; font-family: inherit;" placeholder="Mobile No."></div><div><label style="display: block; margin-bottom: 5px; font-size: 13px; font-weight: 700; color: var(--secondary);">Email Address</label><input id="s-e" type="email" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px; box-sizing:border-box; font-family: inherit;" placeholder="Email (Optional)"></div></div><div style="margin-bottom: 15px;"><label style="display: block; margin-bottom: 5px; font-size: 13px; font-weight: 700; color: var(--secondary);">Course Name</label><select id="s-c" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px; box-sizing:border-box; font-family: inherit;"><option value="N/A" selected>Select Course...</option><option value="Fashion Designing">Fashion Designing</option><option value="Cosmetology">Cosmetology</option><option value="Mastery Program">Mastery Program</option><option value="Basic Program">Basic Program</option><option value="Activation Program">Activation Program</option><option value="NID Program">NID Program</option></select></div><div style="margin-bottom: 15px;"><label style="display: block; margin-bottom: 5px; font-size: 13px; font-weight: 700; color: var(--secondary);">Issue Type *</label><select id="s-i" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px; box-sizing:border-box; font-family: inherit;"><option value="" disabled selected>What do you need help with?</option><option value="NSDC">NSDC</option><option value="KIT">KIT</option><option value="Finance">Finance</option><option value="Training">Training</option><option value="Onboarding">Onboarding</option><option value="Cancellation">Cancellation</option><option value="Exam">Exam</option><option value="Certificate">Certificate</option><option value="Portfolio">Portfolio</option><option value="Extension">Extension</option></select></div><div style="margin-bottom: 10px;"><label style="display: block; margin-bottom: 5px; font-size: 13px; font-weight: 700; color: var(--secondary);">Description / Remark</label><textarea id="s-r" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px; box-sizing:border-box; font-family: inherit; min-height: 80px; resize: vertical;" placeholder="Please describe your issue in detail..."></textarea></div></div>`,
-        preConfirm: () => {
-          const name = $("s-n").value.trim(), phone = $("s-p").value.trim(), email = $("s-e").value.trim(), course = $("s-c").value, issue = $("s-i").value, remark = $("s-r").value.trim();
-          if (!name || !phone || !issue) { Swal.showValidationMessage("Name, Phone & Issue Type are required!"); return false; }
-          return { name, phone, email: email || "-", course, issue, remark: remark || "-", source: "Dashboard", assigned: "Unassigned", priority: "Medium" };
-        }
-      });
-      if (!value) return;
-      setSyncing(true); await apiPost("saveTicket", value); await loadTickets(); setSyncing(false);
-      Swal.fire({ icon: "success", title: "Ticket Created!", confirmButtonColor: theme.orange, timer: 2000 });
-    }
-
-    async function openEditModal(ticket) {
-      const { value } = await Swal.fire({
-        title: "Edit Ticket", showCancelButton: true, confirmButtonColor: theme.orange, cancelButtonColor: "#aaa", confirmButtonText: "Save",
-        html: `<div style="text-align: left; margin-top: 15px;"><div style="margin-bottom: 15px;"><label style="font-size: 13px; font-weight: 600; color: var(--secondary);">Assign To</label><select id="e-a" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px; margin-top: 5px;"><option value="Unassigned" ${ticket.assigned === "Unassigned" ? "selected" : ""}>Unassigned</option><option value="Kumud" ${ticket.assigned === "Kumud" ? "selected" : ""}>Kumud</option><option value="Sanskriti" ${ticket.assigned === "Sanskriti" ? "selected" : ""}>Sanskriti</option><option value="Dhananjaya" ${ticket.assigned === "Dhananjaya" ? "selected" : ""}>Dhananjaya</option></select></div><div><label style="font-size: 13px; font-weight: 600; color: var(--secondary);">Priority</label><select id="e-p" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px; margin-top: 5px;"><option value="Urgent" ${ticket.priority === "Urgent" ? "selected" : ""}>Urgent</option><option value="High" ${ticket.priority === "High" ? "selected" : ""}>High</option><option value="Medium" ${ticket.priority === "Medium" ? "selected" : ""}>Medium</option><option value="Low" ${ticket.priority === "Low" ? "selected" : ""}>Low</option></select></div></div>`,
-        preConfirm: () => ({ assigned: $("e-a").value, priority: $("e-p").value, course: ticket.course, source: ticket.source })
-      });
-      if (!value) return;
-      setSyncing(true); await apiPost("editTicketDetails", { row: ticket.row, info: value }); await loadTickets(); setSyncing(false);
-      Swal.fire({ icon: "success", title: "Saved!", showConfirmButton: false, timer: 1500 });
-    }
-
-    async function loadOnboardTable() {
-      setSyncing(true);
-      const list = await apiGet("getOnboardingTable");
-      const rows = (list && !list.error ? list : []).map((r) => `<tr><td><strong>${escapeHtml(r.name)}</strong></td><td>${escapeHtml(r.phone)}</td><td>${escapeHtml(r.email)}</td><td>${makeBadge(r.program, theme.blue)}</td><td>${escapeHtml(r.source)}</td></tr>`);
-      el["onboard-body"].innerHTML = rowOrEmpty(rows, 5);
-      setSyncing(false);
-    }
-
-    async function openEnrollModal() {
-      const { value } = await Swal.fire({
-        title: "New Enrollment", showCancelButton: true, confirmButtonColor: theme.orange, cancelButtonColor: "#aaa", confirmButtonText: "Save Data",
-        html: `<div style="text-align:left; margin-top:15px;"><div style="margin-bottom:15px;"><label style="font-size:13px; font-weight:600; color:var(--secondary);">Course Name *</label><select id="en-c" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px; margin-top:5px;"><option value="" disabled selected>Select Course...</option><option value="Activation">Activation</option><option value="Fashion Designing">Fashion Designing</option><option value="Cosmetology">Cosmetology</option><option value="Others">Others</option></select></div><div style="margin-bottom:15px;"><label style="font-size:13px; font-weight:600; color:var(--secondary);">Enrollment Count *</label><input type="number" id="en-count" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px; margin-top:5px;" placeholder="Number of enrollments"></div><div><label style="font-size:13px; font-weight:600; color:var(--secondary);">Onboarded By *</label><select id="en-by" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px; margin-top:5px;"><option value="Kumud">Kumud</option><option value="Sanskriti">Sanskriti</option><option value="Dhananjaya">Dhananjaya</option><option value="Web">Web (Form)</option></select></div></div>`,
-        preConfirm: () => {
-          const course = $("en-c").value, count = $("en-count").value, by = $("en-by").value;
-          if (!course || !count) { Swal.showValidationMessage("Please fill all fields"); return false; }
-          const now = new Date(); return { course, month: now.toLocaleString("default", { month: "short" }) + "-" + now.getFullYear(), count, by };
-        }
-      });
-      if (!value) return;
-      setSyncing(true); await apiPost("saveEnrollmentData", value); await loadEnrollData(); setSyncing(false);
-      Swal.fire({ icon: "success", title: "Saved!", showConfirmButton: false, timer: 1500 });
-    }
-
-    async function loadEnrollData() {
-      setSyncing(true);
-      const list = await apiGet("getEnrollmentData");
-      const rows = (list && !list.error ? list : []).map((r) => `<tr><td>${escapeHtml(r.date)}</td><td><strong>${escapeHtml(r.course)}</strong></td><td>${makeBadge(r.count, theme.blue)}</td><td>${escapeHtml(r.by)}</td></tr>`);
-      el["enroll-body"].innerHTML = rowOrEmpty(rows, 4);
-      setSyncing(false);
-    }
+    async function handleStatusChange(row, status) { let remark = ""; if (status === "Solved" || status === "Escalated") { const { value } = await Swal.fire({ title: status === "Solved" ? "Resolution Remark" : "Escalation Reason", input: "text", showCancelButton: true, confirmButtonColor: status === "Solved" ? theme.success : theme.warning }); if (value) remark = value; else if (value === undefined) { await loadTickets(); return; } } setSyncing(true); await apiPost("updateTicketStatus", { row, status, remark }); await loadTickets(); setSyncing(false); Swal.fire({ icon: "success", title: "Updated!", showConfirmButton: false, timer: 1500 }); }
+    async function openTicketModal() { const { value } = await Swal.fire({ title: "", width: "550px", showCancelButton: true, confirmButtonText: "Submit Ticket", cancelButtonText: "Cancel", confirmButtonColor: theme.orange, cancelButtonColor: "#aaa", html: `<div style="text-align: center; margin-bottom: 20px; padding-top: 10px;"><h2 style="margin: 0; color: var(--secondary); font-size: 24px; font-weight: 800;">Raise a Support Ticket 🎫</h2><p style="color: #888; font-size: 14px; margin-top: 5px;">Fill out the form below</p></div><div style="text-align: left;"><div style="margin-bottom: 15px;"><label style="display: block; margin-bottom: 5px; font-size: 13px; font-weight: 700; color: var(--secondary);">Full Name *</label><input id="s-n" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px; box-sizing:border-box; font-family: inherit;" placeholder="Enter your full name"></div><div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;"><div><label style="display: block; margin-bottom: 5px; font-size: 13px; font-weight: 700; color: var(--secondary);">Phone Number *</label><input id="s-p" type="tel" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px; box-sizing:border-box; font-family: inherit;" placeholder="Mobile No."></div><div><label style="display: block; margin-bottom: 5px; font-size: 13px; font-weight: 700; color: var(--secondary);">Email Address</label><input id="s-e" type="email" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px; box-sizing:border-box; font-family: inherit;" placeholder="Email (Optional)"></div></div><div style="margin-bottom: 15px;"><label style="display: block; margin-bottom: 5px; font-size: 13px; font-weight: 700; color: var(--secondary);">Course Name</label><select id="s-c" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px; box-sizing:border-box; font-family: inherit;"><option value="N/A" selected>Select Course...</option><option value="Fashion Designing">Fashion Designing</option><option value="Cosmetology">Cosmetology</option><option value="Mastery Program">Mastery Program</option><option value="Basic Program">Basic Program</option><option value="Activation Program">Activation Program</option><option value="NID Program">NID Program</option></select></div><div style="margin-bottom: 15px;"><label style="display: block; margin-bottom: 5px; font-size: 13px; font-weight: 700; color: var(--secondary);">Issue Type *</label><select id="s-i" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px; box-sizing:border-box; font-family: inherit;"><option value="" disabled selected>What do you need help with?</option><option value="NSDC">NSDC</option><option value="KIT">KIT</option><option value="Finance">Finance</option><option value="Training">Training</option><option value="Onboarding">Onboarding</option><option value="Cancellation">Cancellation</option><option value="Exam">Exam</option><option value="Certificate">Certificate</option><option value="Portfolio">Portfolio</option><option value="Extension">Extension</option></select></div><div style="margin-bottom: 10px;"><label style="display: block; margin-bottom: 5px; font-size: 13px; font-weight: 700; color: var(--secondary);">Description / Remark</label><textarea id="s-r" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px; box-sizing:border-box; font-family: inherit; min-height: 80px; resize: vertical;" placeholder="Please describe your issue in detail..."></textarea></div></div>`, preConfirm: () => { const name = $("s-n").value.trim(), phone = $("s-p").value.trim(), email = $("s-e").value.trim(), course = $("s-c").value, issue = $("s-i").value, remark = $("s-r").value.trim(); if (!name || !phone || !issue) { Swal.showValidationMessage("Name, Phone & Issue Type are required!"); return false; } return { name, phone, email: email || "-", course, issue, remark: remark || "-", source: "Dashboard", assigned: "Unassigned", priority: "Medium" }; } }); if (!value) return; setSyncing(true); await apiPost("saveTicket", value); await loadTickets(); setSyncing(false); Swal.fire({ icon: "success", title: "Ticket Created!", confirmButtonColor: theme.orange, timer: 2000 }); }
+    async function openEditModal(ticket) { const { value } = await Swal.fire({ title: "Edit Ticket", showCancelButton: true, confirmButtonColor: theme.orange, cancelButtonColor: "#aaa", confirmButtonText: "Save", html: `<div style="text-align: left; margin-top: 15px;"><div style="margin-bottom: 15px;"><label style="font-size: 13px; font-weight: 600; color: var(--secondary);">Assign To</label><select id="e-a" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px; margin-top: 5px;"><option value="Unassigned" ${ticket.assigned === "Unassigned" ? "selected" : ""}>Unassigned</option><option value="Kumud" ${ticket.assigned === "Kumud" ? "selected" : ""}>Kumud</option><option value="Sanskriti" ${ticket.assigned === "Sanskriti" ? "selected" : ""}>Sanskriti</option><option value="Dhananjaya" ${ticket.assigned === "Dhananjaya" ? "selected" : ""}>Dhananjaya</option></select></div><div><label style="font-size: 13px; font-weight: 600; color: var(--secondary);">Priority</label><select id="e-p" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px; margin-top: 5px;"><option value="Urgent" ${ticket.priority === "Urgent" ? "selected" : ""}>Urgent</option><option value="High" ${ticket.priority === "High" ? "selected" : ""}>High</option><option value="Medium" ${ticket.priority === "Medium" ? "selected" : ""}>Medium</option><option value="Low" ${ticket.priority === "Low" ? "selected" : ""}>Low</option></select></div></div>`, preConfirm: () => ({ assigned: $("e-a").value, priority: $("e-p").value, course: ticket.course, source: ticket.source }) }); if (!value) return; setSyncing(true); await apiPost("editTicketDetails", { row: ticket.row, info: value }); await loadTickets(); setSyncing(false); Swal.fire({ icon: "success", title: "Saved!", showConfirmButton: false, timer: 1500 }); }
+    async function loadOnboardTable() { setSyncing(true); const list = await apiGet("getOnboardingTable"); const rows = (list && !list.error ? list : []).map((r) => `<tr><td><strong>${escapeHtml(r.name)}</strong></td><td>${escapeHtml(r.phone)}</td><td>${escapeHtml(r.email)}</td><td>${makeBadge(r.program, theme.blue)}</td><td>${escapeHtml(r.source)}</td></tr>`); el["onboard-body"].innerHTML = rowOrEmpty(rows, 5); setSyncing(false); }
+    async function openEnrollModal() { const { value } = await Swal.fire({ title: "New Enrollment", showCancelButton: true, confirmButtonColor: theme.orange, cancelButtonColor: "#aaa", confirmButtonText: "Save Data", html: `<div style="text-align:left; margin-top:15px;"><div style="margin-bottom:15px;"><label style="font-size:13px; font-weight:600; color:var(--secondary);">Course Name *</label><select id="en-c" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px; margin-top:5px;"><option value="" disabled selected>Select Course...</option><option value="Activation">Activation</option><option value="Fashion Designing">Fashion Designing</option><option value="Cosmetology">Cosmetology</option><option value="Others">Others</option></select></div><div style="margin-bottom:15px;"><label style="font-size:13px; font-weight:600; color:var(--secondary);">Enrollment Count *</label><input type="number" id="en-count" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px; margin-top:5px;" placeholder="Number of enrollments"></div><div><label style="font-size:13px; font-weight:600; color:var(--secondary);">Onboarded By *</label><select id="en-by" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px; margin-top:5px;"><option value="Kumud">Kumud</option><option value="Sanskriti">Sanskriti</option><option value="Dhananjaya">Dhananjaya</option><option value="Web">Web (Form)</option></select></div></div>`, preConfirm: () => { const course = $("en-c").value, count = $("en-count").value, by = $("en-by").value; if (!course || !count) { Swal.showValidationMessage("Please fill all fields"); return false; } const now = new Date(); return { course, month: now.toLocaleString("default", { month: "short" }) + "-" + now.getFullYear(), count, by }; } }); if (!value) return; setSyncing(true); await apiPost("saveEnrollmentData", value); await loadEnrollData(); setSyncing(false); Swal.fire({ icon: "success", title: "Saved!", showConfirmButton: false, timer: 1500 }); }
+    async function loadEnrollData() { setSyncing(true); const list = await apiGet("getEnrollmentData"); const rows = (list && !list.error ? list : []).map((r) => `<tr><td>${escapeHtml(r.date)}</td><td><strong>${escapeHtml(r.course)}</strong></td><td>${makeBadge(r.count, theme.blue)}</td><td>${escapeHtml(r.by)}</td></tr>`); el["enroll-body"].innerHTML = rowOrEmpty(rows, 4); setSyncing(false); }
 
     // ==========================================
     // 🎓 STUDENT DATABASE LOGIC
@@ -693,22 +529,16 @@
     let globalStudentData = [];
 
     function toggleStdDetails(rowId) {
-      const details = $("details-std-" + rowId);
-      const button = $("btn-std-" + rowId);
+      const details = $("details-std-" + rowId); const button = $("btn-std-" + rowId);
       if (!details || !button) return;
       const isHidden = details.style.display === "none" || details.style.display === "";
-      details.style.display = isHidden ? "table-row" : "none";
-      button.style.transform = isHidden ? "rotate(90deg)" : "rotate(0deg)";
+      details.style.display = isHidden ? "table-row" : "none"; button.style.transform = isHidden ? "rotate(90deg)" : "rotate(0deg)";
     }
 
     async function loadStudentDatabase() {
       setSyncing(true);
       const list = await apiGet("getStudentDatabase");
-      
-      // Store the raw data in our global variable
       globalStudentData = list && !list.error ? list : []; 
-      
-      // Draw the table
       renderStudentTable(globalStudentData); 
       setSyncing(false);
     }
@@ -717,29 +547,16 @@
       const rows = dataToRender.map((s, index) => {
         const uniqueId = s.rowId || index; 
         const counsellorName = s.counsellor || "Not Assigned / Backend Update Pending";
-
         return `
         <tr class="student-row" style="cursor:pointer;" data-toggle-std="${uniqueId}">
-          <td style="text-align:center;">
-            <button id="btn-std-${uniqueId}" class="toggle-btn" style="pointer-events:none;">▶</button>
-          </td>
-          <td><strong>${escapeHtml(s.name)}</strong></td>
-          <td>${escapeHtml(s.phone)}</td>
-          <td>${escapeHtml(s.email)}</td>
-          <td>${makeBadge(s.course, theme.blue)}</td>
-          <td><strong>${escapeHtml(s.state || "-")}</strong></td> <td>${escapeHtml(s.date)}</td>
+          <td style="text-align:center;"><button id="btn-std-${uniqueId}" class="toggle-btn" style="pointer-events:none;">▶</button></td>
+          <td><strong>${escapeHtml(s.name)}</strong></td><td>${escapeHtml(s.phone)}</td><td>${escapeHtml(s.email)}</td>
+          <td>${makeBadge(s.course, theme.blue)}</td><td><strong>${escapeHtml(s.state || "-")}</strong></td><td>${escapeHtml(s.date)}</td>
         </tr>
-        <tr id="details-std-${uniqueId}" style="display:none;">
-          <td colspan="7" style="padding:0; border-bottom:1px solid #eee;">
-            <div class="detail-row-student">
-              <p style="margin:5px 0; font-size:13px; line-height:1.5;"><strong>📍 Address:</strong> ${escapeHtml(s.address)}</p>
-              <p style="margin:5px 0; font-size:13px; margin-top:10px;"><strong>👤 Counsellor Name:</strong> ${escapeHtml(counsellorName)}</p>
-            </div>
-          </td>
-        </tr>
-        `;
+        <tr id="details-std-${uniqueId}" style="display:none;"><td colspan="7" style="padding:0; border-bottom:1px solid #eee;">
+          <div class="detail-row-student"><p style="margin:5px 0; font-size:13px; line-height:1.5;"><strong>📍 Address:</strong> ${escapeHtml(s.address)}</p><p style="margin:5px 0; font-size:13px; margin-top:10px;"><strong>👤 Counsellor Name:</strong> ${escapeHtml(counsellorName)}</p></div>
+        </td></tr>`;
       });
-      
       $("students-body").innerHTML = rows.length ? rows.join("") : `<tr><td colspan="7" style="text-align:center;">No Matches Found</td></tr>`;
     }
 
@@ -748,177 +565,116 @@
       clearTimeout(searchTimeout);
       searchTimeout = setTimeout(() => {
         const input = e.target.value.toLowerCase().trim();
-        
-        // If search box is empty, show everyone
-        if (!input) {
-          renderStudentTable(globalStudentData);
-          return;
-        }
-
-        // ⚡ Search the array in memory, NOT the DOM! (Instant)
+        if (!input) { renderStudentTable(globalStudentData); return; }
         const filteredData = globalStudentData.filter(s => {
-          // Add s.state to searchable text
           const searchableText = `${s.name} ${s.phone} ${s.email} ${s.course} ${s.state || ""}`.toLowerCase();
           return searchableText.includes(input);
         });
-
-        // Draw only the matching students
         renderStudentTable(filteredData);
       }, 300);
     }
 
     // ==========================================
-    // 🗺️ NEW: STATE DATA LOGIC (Runs fully on Frontend!)
+    // 🗺️ STATE DATA LOGIC
     // ==========================================
     async function loadStateData() {
       setSyncing(true);
-      
-      // Fetch student data
       const list = await apiGet("getStudentDatabase");
       const data = list && !list.error ? list : [];
 
-      // Logic: Count students by State
       const stateCounts = {};
       data.forEach(s => {
-        // Handle blanks or dashes
         const stateName = (s.state && s.state.trim() !== "" && s.state !== "-") ? s.state.trim() : "Unknown / Not Specified";
         stateCounts[stateName] = (stateCounts[stateName] || 0) + 1;
       });
 
-      // Convert to array and Sort by highest count
       const sortedStates = Object.keys(stateCounts).map(key => ({
-        stateName: key,
-        count: stateCounts[key]
+        stateName: key, count: stateCounts[key]
       })).sort((a, b) => b.count - a.count);
 
-      // Create Table Rows
       const rows = sortedStates.map(item => `
         <tr>
           <td><strong>${escapeHtml(item.stateName)}</strong></td>
           <td>${makeBadge(item.count, theme.purple, "font-size: 14px; padding: 6px 18px;")}</td>
         </tr>
       `);
-
       el["state-body"].innerHTML = rowOrEmpty(rows, 2, "No State Data Found");
       setSyncing(false);
     }
 
+    /* --- NSDC, TASKS, REPORTS ... --- */
+    async function openNsdcModal(type) { const { value } = await Swal.fire({ title: type, showCancelButton: true, confirmButtonColor: type === "Enrollment" ? theme.blue : theme.success, cancelButtonColor: "#aaa", confirmButtonText: "Save Data", html: `<div style="text-align:left; margin-top:15px;"><div style="margin-bottom:15px;"><label style="font-size:13px; font-weight:600; color:var(--secondary);">Batch Number *</label><input id="n-b" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px; margin-top:5px;" placeholder="Enter Batch No."></div><div><label style="font-size:13px; font-weight:600; color:var(--secondary);">Count *</label><input type="number" id="n-c" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px; margin-top:5px;" placeholder="Enter Count"></div></div>`, preConfirm: () => { const batch = $("n-b").value.trim(), count = $("n-c").value; if (!batch || !count) { Swal.showValidationMessage("Please fill all fields"); return false; } return { type, batch, count }; } }); if (!value) return; setSyncing(true); await apiPost("saveNsdcData", value); await loadNsdcData(); setSyncing(false); Swal.fire({ icon: "success", title: "Saved!", showConfirmButton: false, timer: 1500 }); }
+    async function loadNsdcData() { setSyncing(true); const list = await apiGet("getNsdcData"); const rows = (list && !list.error ? list : []).map((r) => `<tr><td>${escapeHtml(r.date)}</td><td><strong>${escapeHtml(r.type)}</strong></td><td>${escapeHtml(r.batch)}</td><td>${makeBadge(r.count, theme.blue)}</td></tr>`); el["nsdc-body"].innerHTML = rowOrEmpty(rows, 4); setSyncing(false); }
+    async function loadTasks() { setSyncing(true); const list = await apiGet("getTasks"); const rows = (list && !list.error ? list : []).map((t) => `<tr><td>${escapeHtml(t.date)}</td><td><strong>${escapeHtml(t.task)}</strong></td><td>${escapeHtml(t.executive)}</td><td>${makeBadge(t.status, t.status === "Done" ? theme.success : theme.danger)}</td><td>${t.status === "Done" ? "✔️" : `<select data-task-row="${t.row}"><option value="Pending" ${t.status === "Pending" ? "selected" : ""}>Pending</option><option value="Done" ${t.status === "Done" ? "selected" : ""}>Done</option></select>`}</td></tr>`); el["tasks-body"].innerHTML = rowOrEmpty(rows, 5); setSyncing(false); }
+    async function submitTask() { const task = el["task-name"].value.trim(); if (!task) return; setSyncing(true); await apiPost("saveTask", { task, exec: el["task-exec"].value, status: el["task-status"].value }); el["task-name"].value = ""; await loadTasks(); setSyncing(false); }
+    async function updateTask(row, status) { setSyncing(true); await apiPost("updateTaskStatusRow", { row, status }); await loadTasks(); setSyncing(false); }
+    async function loadReportsData() { setSyncing(true); const res = await apiGet("getReportsData", { session: el["rep-session"].value, groupBy: el["rep-group"].value, start: el["rep-start"].value, end: el["rep-end"].value }); if (res && !res.error) { el["rep-nps-body"].innerHTML = rowOrEmpty(res.npsReport.map((r) => `<tr><td><strong>${escapeHtml(r.key)}</strong></td><td>${escapeHtml(r.total)}</td><td>${makeBadge(r.nps, r.nps >= 50 ? theme.success : r.nps > 0 ? theme.warning : theme.danger)}</td></tr>`), 3); el["rep-trainer-body"].innerHTML = rowOrEmpty(res.trainerReport.map((r) => `<tr><td><strong>${escapeHtml(r.key)}</strong></td><td>${escapeHtml(r.total)}</td><td>${makeBadge(r.nps, r.nps >= 50 ? theme.success : r.nps > 0 ? theme.warning : theme.danger)}</td></tr>`), 3, "No Data / Missing Column"); el["rep-ops-body"].innerHTML = rowOrEmpty(res.opsReport.map((r) => `<tr><td><strong>${escapeHtml(r.key)}</strong></td><td>${escapeHtml(r.tasks || 0)}</td><td>${escapeHtml(r.onboard || 0)}</td><td>${escapeHtml(r.nsdc || 0)}</td></tr>`), 4); } setSyncing(false); }
+
     // ==========================================
-    // 📋 OTHER MODULES
+    // 💡 SIDEBAR VIEW SWITCHER
     // ==========================================
-
-    async function openNsdcModal(type) {
-      const { value } = await Swal.fire({
-        title: type, showCancelButton: true, confirmButtonColor: type === "Enrollment" ? theme.blue : theme.success, cancelButtonColor: "#aaa", confirmButtonText: "Save Data",
-        html: `<div style="text-align:left; margin-top:15px;"><div style="margin-bottom:15px;"><label style="font-size:13px; font-weight:600; color:var(--secondary);">Batch Number *</label><input id="n-b" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px; margin-top:5px;" placeholder="Enter Batch No."></div><div><label style="font-size:13px; font-weight:600; color:var(--secondary);">Count *</label><input type="number" id="n-c" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px; margin-top:5px;" placeholder="Enter Count"></div></div>`,
-        preConfirm: () => {
-          const batch = $("n-b").value.trim(), count = $("n-c").value;
-          if (!batch || !count) { Swal.showValidationMessage("Please fill all fields"); return false; }
-          return { type, batch, count };
-        }
-      });
-      if (!value) return;
-      setSyncing(true); await apiPost("saveNsdcData", value); await loadNsdcData(); setSyncing(false);
-      Swal.fire({ icon: "success", title: "Saved!", showConfirmButton: false, timer: 1500 });
-    }
-
-    async function loadNsdcData() {
-      setSyncing(true);
-      const list = await apiGet("getNsdcData");
-      const rows = (list && !list.error ? list : []).map((r) => `<tr><td>${escapeHtml(r.date)}</td><td><strong>${escapeHtml(r.type)}</strong></td><td>${escapeHtml(r.batch)}</td><td>${makeBadge(r.count, theme.blue)}</td></tr>`);
-      el["nsdc-body"].innerHTML = rowOrEmpty(rows, 4);
-      setSyncing(false);
-    }
-
-    async function loadTasks() {
-      setSyncing(true);
-      const list = await apiGet("getTasks");
-      const rows = (list && !list.error ? list : []).map((t) => `<tr><td>${escapeHtml(t.date)}</td><td><strong>${escapeHtml(t.task)}</strong></td><td>${escapeHtml(t.executive)}</td><td>${makeBadge(t.status, t.status === "Done" ? theme.success : theme.danger)}</td><td>${t.status === "Done" ? "✔️" : `<select data-task-row="${t.row}"><option value="Pending" ${t.status === "Pending" ? "selected" : ""}>Pending</option><option value="Done" ${t.status === "Done" ? "selected" : ""}>Done</option></select>`}</td></tr>`);
-      el["tasks-body"].innerHTML = rowOrEmpty(rows, 5);
-      setSyncing(false);
-    }
-
-    async function submitTask() {
-      const task = el["task-name"].value.trim(); if (!task) return;
-      setSyncing(true); await apiPost("saveTask", { task, exec: el["task-exec"].value, status: el["task-status"].value });
-      el["task-name"].value = ""; await loadTasks(); setSyncing(false);
-    }
-
-    async function updateTask(row, status) {
-      setSyncing(true); await apiPost("updateTaskStatusRow", { row, status }); await loadTasks(); setSyncing(false);
-    }
-
-    async function loadReportsData() {
-      setSyncing(true);
-      const res = await apiGet("getReportsData", { session: el["rep-session"].value, groupBy: el["rep-group"].value, start: el["rep-start"].value, end: el["rep-end"].value });
-      if (res && !res.error) {
-        el["rep-nps-body"].innerHTML = rowOrEmpty(res.npsReport.map((r) => `<tr><td><strong>${escapeHtml(r.key)}</strong></td><td>${escapeHtml(r.total)}</td><td>${makeBadge(r.nps, r.nps >= 50 ? theme.success : r.nps > 0 ? theme.warning : theme.danger)}</td></tr>`), 3);
-        el["rep-trainer-body"].innerHTML = rowOrEmpty(res.trainerReport.map((r) => `<tr><td><strong>${escapeHtml(r.key)}</strong></td><td>${escapeHtml(r.total)}</td><td>${makeBadge(r.nps, r.nps >= 50 ? theme.success : r.nps > 0 ? theme.warning : theme.danger)}</td></tr>`), 3, "No Data / Missing Column");
-        el["rep-ops-body"].innerHTML = rowOrEmpty(res.opsReport.map((r) => `<tr><td><strong>${escapeHtml(r.key)}</strong></td><td>${escapeHtml(r.tasks || 0)}</td><td>${escapeHtml(r.onboard || 0)}</td><td>${escapeHtml(r.nsdc || 0)}</td></tr>`), 4);
-      }
-      setSyncing(false);
-    }
-
     function switchView(view) {
       const config = viewConfig[view]; if (!config) return;
+      
+      // Hide all views
       $$('[id^="view-"]').forEach((n) => n.classList.add("hidden"));
-      $$(".sidebar li").forEach((n) => n.classList.remove("active"));
+      
+      // Remove active states from all sidebar items
+      $$(".sidebar li[data-view]").forEach((n) => n.classList.remove("active"));
+      
+      // Show correct view
       $("view-" + view).classList.remove("hidden");
-      const activeTab = $("m-" + view); if (activeTab) activeTab.classList.add("active");
+      
+      const activeTab = $("m-" + view); 
+      if (activeTab) {
+        activeTab.classList.add("active");
+        
+        // Agar yeh kisi group ke andar hai (jaise Onboarding Data), toh parent ko khula rakho
+        const parentGroup = activeTab.closest('.menu-group');
+        if (parentGroup) {
+          parentGroup.classList.add('open');
+        }
+      }
+      
       el["page-title"].textContent = config.title; el["mobile-view-select"].value = view;
       config.loader();
     }
 
-    function initDefaultDates() {
-      const now = new Date(); const year = now.getFullYear(); const month = String(now.getMonth() + 1).padStart(2, "0"); const lastDay = String(new Date(year, now.getMonth() + 1, 0).getDate()).padStart(2, "0");
-      const start = `${year}-${month}-01`; const end = `${year}-${month}-${lastDay}`;
-      el["dash-start"].value = start; el["dash-end"].value = end; el["feed-start"].value = start; el["feed-end"].value = end; el["rep-start"].value = start; el["rep-end"].value = end;
-    }
-
-    async function initSessions() {
-      const list = await apiGet("getSessions"); if (!list || list.error) return;
-      $$(".session-sel").forEach((select) => {
-        const existing = new Set(Array.from(select.options).map((o) => o.value));
-        list.forEach((name) => { if (!existing.has(name)) { const option = document.createElement("option"); option.value = name; option.textContent = name; select.appendChild(option); } });
-      });
-    }
+    function initDefaultDates() { const now = new Date(); const year = now.getFullYear(); const month = String(now.getMonth() + 1).padStart(2, "0"); const lastDay = String(new Date(year, now.getMonth() + 1, 0).getDate()).padStart(2, "0"); const start = `${year}-${month}-01`; const end = `${year}-${month}-${lastDay}`; el["dash-start"].value = start; el["dash-end"].value = end; el["feed-start"].value = start; el["feed-end"].value = end; el["rep-start"].value = start; el["rep-end"].value = end; }
+    async function initSessions() { const list = await apiGet("getSessions"); if (!list || list.error) return; $$(".session-sel").forEach((select) => { const existing = new Set(Array.from(select.options).map((o) => o.value)); list.forEach((name) => { if (!existing.has(name)) { const option = document.createElement("option"); option.value = name; option.textContent = name; select.appendChild(option); } }); }); }
 
     function bindEvents() {
+      // Sidebar Sub-Menu Toggle
+      $$(".sidebar .menu-title").forEach(title => {
+        title.addEventListener("click", () => {
+          const group = title.closest('.menu-group');
+          group.classList.toggle('open');
+        });
+      });
+
+      // View Switchers
       $$(".sidebar li[data-view]").forEach((item) => { item.addEventListener("click", () => switchView(item.dataset.view)); });
       el["mobile-view-select"].addEventListener("change", (e) => { switchView(e.target.value); });
+      
+      // Other Actions
       $("dash-apply").addEventListener("click", loadDashboardData); $("feed-apply").addEventListener("click", loadFeedbackData); $("rep-apply").addEventListener("click", loadReportsData);
       $("raise-ticket-btn").addEventListener("click", openTicketModal); $("open-enroll-btn").addEventListener("click", openEnrollModal); $("add-task-btn").addEventListener("click", submitTask);
       $$("[data-nsdc-type]").forEach((b) => { b.addEventListener("click", () => openNsdcModal(b.dataset.nsdcType)); });
       
-      // SEARCH BINDING
       if($("student-search")) { $("student-search").addEventListener("keyup", filterStudents); }
 
-      // TICKETING TOGGLE BINDING
-      el["tick-body"].addEventListener("click", (e) => {
-        const toggleRow = e.target.closest("[data-toggle-row]"); if (toggleRow) { toggleDetails(toggleRow.dataset.toggleRow); return; }
-        const editButton = e.target.closest(".edit-ticket-btn"); if (editButton) { const ticket = JSON.parse(decodeURIComponent(editButton.dataset.ticket)); openEditModal(ticket); }
-      });
-      
-      // STUDENT DB TOGGLE BINDING
-      el["students-body"].addEventListener("click", (e) => {
-        const toggleRow = e.target.closest("[data-toggle-std]");
-        if (toggleRow) { toggleStdDetails(toggleRow.dataset.toggleStd); }
-      });
-
+      el["students-body"].addEventListener("click", (e) => { const toggleRow = e.target.closest("[data-toggle-std]"); if (toggleRow) { toggleStdDetails(toggleRow.dataset.toggleStd); } });
+      el["tick-body"].addEventListener("click", (e) => { const toggleRow = e.target.closest("[data-toggle-row]"); if (toggleRow) { toggleDetails(toggleRow.dataset.toggleRow); return; } const editButton = e.target.closest(".edit-ticket-btn"); if (editButton) { const ticket = JSON.parse(decodeURIComponent(editButton.dataset.ticket)); openEditModal(ticket); } });
       el["tick-body"].addEventListener("change", (e) => { const select = e.target.closest("[data-status-row]"); if (select) { handleStatusChange(select.dataset.statusRow, select.value); } });
       el["tasks-body"].addEventListener("change", (e) => { const select = e.target.closest("[data-task-row]"); if (select) { updateTask(select.dataset.taskRow, select.value); } });
     }
 
     async function initApp() {
-      cacheElements();
-      bindEvents();
-      initDefaultDates();
+      cacheElements(); bindEvents(); initDefaultDates();
       if (window.Chart && window.ChartDataLabels) { Chart.register(ChartDataLabels); }
-      await initSessions();
-      await loadDashboardData();
+      await initSessions(); await loadDashboardData();
     }
 
-    // 🔥 PAGE LOAD PE CHECK KAREGA KI USER ALREADY LOGGED IN HAI YA NAHI
     window.addEventListener('DOMContentLoaded', checkSavedSession);
   </script>
 </body>
