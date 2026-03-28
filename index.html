@@ -176,7 +176,7 @@
           <option value="onboard">Onboarding</option>
           <option value="enroll">Enrollment</option>
           <option value="students">Student Database</option>
-          <option value="nsdc">NSDC</option>
+          <option value="state">State Data</option> <option value="nsdc">NSDC</option>
           <option value="tasks">Tasks</option>
           <option value="report">Reports</option>
         </select>
@@ -195,7 +195,7 @@
             <li id="m-onboard" data-view="onboard">Onboarding</li>
             <li id="m-enroll" data-view="enroll">Onboarding Data</li>
             <li id="m-students" data-view="students">Student Database</li>
-            <li id="m-nsdc" data-view="nsdc">NSDC / Certificate</li>
+            <li id="m-state" data-view="state">State Data</li> <li id="m-nsdc" data-view="nsdc">NSDC / Certificate</li>
             <li id="m-tasks" data-view="tasks">Daily Tasks</li>
             <li id="m-report" data-view="report">Analytics Reports</li>
           </ul>
@@ -303,10 +303,29 @@
                   <th>Phone Number</th>
                   <th>Email Address</th>
                   <th>Course</th>
-                  <th>State</th> <th>Date/Batch</th>
+                  <th>State</th>
+                  <th>Date/Batch</th>
                 </tr>
               </thead>
               <tbody id="students-body"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div id="view-state" class="hidden">
+          <div class="toolbar">
+            <h3 style="margin: 0; color: var(--secondary);">State-wise Student Count</h3>
+            <button class="btn-apply" onclick="loadStateData()" style="background:var(--purple);">🔄 Refresh</button>
+          </div>
+          <div class="table-wrapper" style="margin-top: 0;">
+            <table>
+              <thead>
+                <tr>
+                  <th>State Name</th>
+                  <th>Total Enrolled Students</th>
+                </tr>
+              </thead>
+              <tbody id="state-body"></tbody>
             </table>
           </div>
         </div>
@@ -460,6 +479,7 @@
       onboard: { title: "ONBOARDING", loader: loadOnboardTable },
       enroll: { title: "ONBOARDING DATA", loader: loadEnrollData },
       students: { title: "STUDENT DATABASE", loader: loadStudentDatabase },
+      state: { title: "STATE DATA", loader: loadStateData }, // NEW ROUTE
       nsdc: { title: "NSDC / CERTIFICATE", loader: loadNsdcData },
       tasks: { title: "DAILY TASKS", loader: loadTasks },
       report: { title: "ANALYTICS REPORTS", loader: loadReportsData }
@@ -468,7 +488,7 @@
     function cacheElements() {
       [ "page-title", "total", "untouched-count", "solved-count", "onboard-count", "enrolled-count",
         "dash-session", "dash-rating", "dash-start", "dash-end", "feed-session", "feed-rating", "feed-start", "feed-end",
-        "feed-body", "tick-body", "onboard-body", "enroll-body", "students-body", "student-search", "nsdc-body", "tasks-body",
+        "feed-body", "tick-body", "onboard-body", "enroll-body", "students-body", "state-body", "student-search", "nsdc-body", "tasks-body",
         "rep-session", "rep-group", "rep-start", "rep-end", "rep-nps-body", "rep-trainer-body", "rep-ops-body",
         "task-name", "task-exec", "task-status", "mobile-view-select"
       ].forEach((id) => { el[id] = $(id); });
@@ -479,7 +499,7 @@
     }
 
     function makeBadge(text, background, extraStyle = "") { return `<span class="badge" style="background:${background};${extraStyle}">${escapeHtml(text)}</span>`; }
-    function rowOrEmpty(rows, colspan, message = "No Data Found") { return rows.length ? rows.join("") : `<tr><td colspan="${colspan}">${message}</td></tr>`; }
+    function rowOrEmpty(rows, colspan, message = "No Data Found") { return rows.length ? rows.join("") : `<tr><td colspan="${colspan}" style="text-align:center;">${message}</td></tr>`; }
     function setSyncing(isSyncing) { $$(".card, .content-section, .table-wrapper").forEach((n) => n.classList.toggle("syncing", isSyncing)); }
 
     async function request(method, action, payload = {}) {
@@ -667,7 +687,9 @@
       setSyncing(false);
     }
 
-    // 🚀 100% BULLETPROOF STUDENT DATABASE LOADER
+    // ==========================================
+    // 🎓 STUDENT DATABASE LOGIC
+    // ==========================================
     let globalStudentData = [];
 
     function toggleStdDetails(rowId) {
@@ -744,6 +766,46 @@
         renderStudentTable(filteredData);
       }, 300);
     }
+
+    // ==========================================
+    // 🗺️ NEW: STATE DATA LOGIC (Runs fully on Frontend!)
+    // ==========================================
+    async function loadStateData() {
+      setSyncing(true);
+      
+      // Fetch student data
+      const list = await apiGet("getStudentDatabase");
+      const data = list && !list.error ? list : [];
+
+      // Logic: Count students by State
+      const stateCounts = {};
+      data.forEach(s => {
+        // Handle blanks or dashes
+        const stateName = (s.state && s.state.trim() !== "" && s.state !== "-") ? s.state.trim() : "Unknown / Not Specified";
+        stateCounts[stateName] = (stateCounts[stateName] || 0) + 1;
+      });
+
+      // Convert to array and Sort by highest count
+      const sortedStates = Object.keys(stateCounts).map(key => ({
+        stateName: key,
+        count: stateCounts[key]
+      })).sort((a, b) => b.count - a.count);
+
+      // Create Table Rows
+      const rows = sortedStates.map(item => `
+        <tr>
+          <td><strong>${escapeHtml(item.stateName)}</strong></td>
+          <td>${makeBadge(item.count, theme.purple, "font-size: 14px; padding: 6px 18px;")}</td>
+        </tr>
+      `);
+
+      el["state-body"].innerHTML = rowOrEmpty(rows, 2, "No State Data Found");
+      setSyncing(false);
+    }
+
+    // ==========================================
+    // 📋 OTHER MODULES
+    // ==========================================
 
     async function openNsdcModal(type) {
       const { value } = await Swal.fire({
