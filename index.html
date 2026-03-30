@@ -535,13 +535,34 @@
               <label style="font-size:13px; font-weight:bold; color:var(--secondary);">Escalate To (Select Multiple):</label>
               
               <div style="max-height: 160px; overflow-y: auto; border: 1px solid #ccc; padding: 12px; border-radius: 5px; margin-top: 5px; margin-bottom: 15px; background: #fff;">
-                <label style="display:block; margin-bottom:8px; cursor:pointer; font-size:14px;"><input type="checkbox" class="esc-checkbox" value="prateek@skillinabox.in"> <b>Prateek</b> - CEO</label>
-                <label style="display:block; margin-bottom:8px; cursor:pointer; font-size:14px;"><input type="checkbox" class="esc-checkbox" value="kanisk@skillinabox.in"> <b>Kanisk</b> - Operations</label>
-                <label style="display:block; margin-bottom:8px; cursor:pointer; font-size:14px;"><input type="checkbox" class="esc-checkbox" value="tarundeep@skillinabox.in"> <b>Tarundeep</b> - Admin</label>
-                <label style="display:block; margin-bottom:8px; cursor:pointer; font-size:14px;"><input type="checkbox" class="esc-checkbox" value="Pradeep@skillinabox.in"> <b>Pradeep</b> - Accounts</label>
-                <label style="display:block; margin-bottom:8px; cursor:pointer; font-size:14px;"><input type="checkbox" class="esc-checkbox" value="rohit@skillinabox.in"> <b>Rohit</b> - Finance</label>
-                <label style="display:block; margin-bottom:8px; cursor:pointer; font-size:14px;"><input type="checkbox" class="esc-checkbox" value="trainers@skillinabox.in"> <b>Trainers</b> - Product</label>
-                <label style="display:block; margin-bottom:0px; cursor:pointer; font-size:14px;"><input type="checkbox" class="esc-checkbox" value="kishlay@skillinabox.in"> <b>Kishlay</b> - Sales</label>
+                <label style="display:flex; align-items:center; margin-bottom:10px; cursor:pointer; font-size:14px;">
+                  <input type="checkbox" class="esc-checkbox" value="prateek@skillinabox.in" style="width:16px; height:16px; margin:0 10px 0 0; cursor:pointer;"> 
+                  <span><b>Prateek</b> - CEO</span>
+                </label>
+                <label style="display:flex; align-items:center; margin-bottom:10px; cursor:pointer; font-size:14px;">
+                  <input type="checkbox" class="esc-checkbox" value="kanisk@skillinabox.in" style="width:16px; height:16px; margin:0 10px 0 0; cursor:pointer;"> 
+                  <span><b>Kanisk</b> - Operations</span>
+                </label>
+                <label style="display:flex; align-items:center; margin-bottom:10px; cursor:pointer; font-size:14px;">
+                  <input type="checkbox" class="esc-checkbox" value="tarundeep@skillinabox.in" style="width:16px; height:16px; margin:0 10px 0 0; cursor:pointer;"> 
+                  <span><b>Tarundeep</b> - Admin</span>
+                </label>
+                <label style="display:flex; align-items:center; margin-bottom:10px; cursor:pointer; font-size:14px;">
+                  <input type="checkbox" class="esc-checkbox" value="Pradeep@skillinabox.in" style="width:16px; height:16px; margin:0 10px 0 0; cursor:pointer;"> 
+                  <span><b>Pradeep</b> - Accounts</span>
+                </label>
+                <label style="display:flex; align-items:center; margin-bottom:10px; cursor:pointer; font-size:14px;">
+                  <input type="checkbox" class="esc-checkbox" value="rohit@skillinabox.in" style="width:16px; height:16px; margin:0 10px 0 0; cursor:pointer;"> 
+                  <span><b>Rohit</b> - Finance</span>
+                </label>
+                <label style="display:flex; align-items:center; margin-bottom:10px; cursor:pointer; font-size:14px;">
+                  <input type="checkbox" class="esc-checkbox" value="trainers@skillinabox.in" style="width:16px; height:16px; margin:0 10px 0 0; cursor:pointer;"> 
+                  <span><b>Trainers</b> - Product</span>
+                </label>
+                <label style="display:flex; align-items:center; margin-bottom:0px; cursor:pointer; font-size:14px;">
+                  <input type="checkbox" class="esc-checkbox" value="kishlay@skillinabox.in" style="width:16px; height:16px; margin:0 10px 0 0; cursor:pointer;"> 
+                  <span><b>Kishlay</b> - Sales</span>
+                </label>
               </div>
 
               <label style="font-size:13px; font-weight:bold; color:var(--secondary);">Escalation Reason:</label>
@@ -551,7 +572,6 @@
           showCancelButton: true,
           confirmButtonColor: theme.warning,
           preConfirm: () => {
-            // Saare tick kiye hue emails ko utha kar comma (,) se jod dega
             const checkboxes = document.querySelectorAll('.esc-checkbox:checked');
             const selectedEmails = Array.from(checkboxes).map(cb => cb.value);
             const to = selectedEmails.join(",");
