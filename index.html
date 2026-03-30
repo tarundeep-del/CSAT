@@ -519,7 +519,7 @@
     }
     
     // 👇 FIX: ESCALATION DROPDOWN LOGIC ADDED HERE
-    async function handleStatusChange(row, status) { 
+  async function handleStatusChange(row, status) { 
       let remark = ""; 
       let escalateTo = "";
       
@@ -532,13 +532,18 @@
           title: "Escalate Ticket",
           html: `
             <div style="text-align:left;">
-              <label style="font-size:13px; font-weight:bold; color:var(--secondary);">Escalate To (Select Email):</label>
-              <select id="esc-to" style="width:100%; padding:10px; margin-top:5px; margin-bottom:15px; border-radius:5px; border:1px solid #ccc;">
-                <option value="" disabled selected>Select Manager/Lead...</option>
-                <option value="manager1@company.com">Manager 1 (manager1@company.com)</option>
-                <option value="manager2@company.com">Manager 2 (manager2@company.com)</option>
-                <option value="lead@company.com">Team Lead (lead@company.com)</option>
-              </select>
+              <label style="font-size:13px; font-weight:bold; color:var(--secondary);">Escalate To (Select Multiple):</label>
+              
+              <div style="max-height: 160px; overflow-y: auto; border: 1px solid #ccc; padding: 12px; border-radius: 5px; margin-top: 5px; margin-bottom: 15px; background: #fff;">
+                <label style="display:block; margin-bottom:8px; cursor:pointer; font-size:14px;"><input type="checkbox" class="esc-checkbox" value="prateek@skillinabox.in"> <b>Prateek</b> - CEO</label>
+                <label style="display:block; margin-bottom:8px; cursor:pointer; font-size:14px;"><input type="checkbox" class="esc-checkbox" value="kanisk@skillinabox.in"> <b>Kanisk</b> - Operations</label>
+                <label style="display:block; margin-bottom:8px; cursor:pointer; font-size:14px;"><input type="checkbox" class="esc-checkbox" value="tarundeep@skillinabox.in"> <b>Tarundeep</b> - Admin</label>
+                <label style="display:block; margin-bottom:8px; cursor:pointer; font-size:14px;"><input type="checkbox" class="esc-checkbox" value="Pradeep@skillinabox.in"> <b>Pradeep</b> - Accounts</label>
+                <label style="display:block; margin-bottom:8px; cursor:pointer; font-size:14px;"><input type="checkbox" class="esc-checkbox" value="rohit@skillinabox.in"> <b>Rohit</b> - Finance</label>
+                <label style="display:block; margin-bottom:8px; cursor:pointer; font-size:14px;"><input type="checkbox" class="esc-checkbox" value="trainers@skillinabox.in"> <b>Trainers</b> - Product</label>
+                <label style="display:block; margin-bottom:0px; cursor:pointer; font-size:14px;"><input type="checkbox" class="esc-checkbox" value="kishlay@skillinabox.in"> <b>Kishlay</b> - Sales</label>
+              </div>
+
               <label style="font-size:13px; font-weight:bold; color:var(--secondary);">Escalation Reason:</label>
               <textarea id="esc-reason" style="width:100%; padding:10px; margin-top:5px; border-radius:5px; border:1px solid #ccc; min-height:80px;" placeholder="Why are you escalating this?"></textarea>
             </div>
@@ -546,9 +551,16 @@
           showCancelButton: true,
           confirmButtonColor: theme.warning,
           preConfirm: () => {
-            const to = document.getElementById("esc-to").value;
+            // Saare tick kiye hue emails ko utha kar comma (,) se jod dega
+            const checkboxes = document.querySelectorAll('.esc-checkbox:checked');
+            const selectedEmails = Array.from(checkboxes).map(cb => cb.value);
+            const to = selectedEmails.join(",");
             const reason = document.getElementById("esc-reason").value.trim();
-            if(!to || !reason) { Swal.showValidationMessage("Please select a person and enter a reason!"); return false; }
+            
+            if(selectedEmails.length === 0 || !reason) { 
+              Swal.showValidationMessage("Please select at least one person and enter a reason!"); 
+              return false; 
+            }
             return { to, reason };
           }
         });
