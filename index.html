@@ -763,10 +763,18 @@
       el["tasks-body"].addEventListener("change", (e) => { const select = e.target.closest("[data-task-row]"); if (select) { updateTask(select.dataset.taskRow, select.value); } });
     }
 
-    async function initApp() {
-      cacheElements(); bindEvents(); initDefaultDates();
+async function initApp() {
+      cacheElements(); 
+      bindEvents(); 
+      initDefaultDates();
       if (window.Chart && window.ChartDataLabels) { Chart.register(ChartDataLabels); }
-      await initSessions(); await loadDashboardData();
+      
+      // 👇 NAYA SUPER-FAST PARALLEL LOADING LOGIC
+      // Ab dono API calls ek sath shoot hongi, ek dusre ka wait nahi karengi!
+      await Promise.all([
+        initSessions(),
+        loadDashboardData()
+      ]);
     }
 
     window.addEventListener('DOMContentLoaded', checkSavedSession);
