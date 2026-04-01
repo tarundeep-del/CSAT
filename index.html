@@ -373,16 +373,8 @@
   </div>
 
   <script>
-    // 🔗 API URLs
+    // API URL - Backend Script Link
     const API_URL = "https://script.google.com/macros/s/AKfycbzZvoyP-WOdDdUFmktk3XS79mIOkq7sWjAcBBXWthAQBwHmMBJRP33PUE_qkusfqxWb/exec";
-    
-    // 🔥 SUPER FAST DIRECT FIREBASE LINK
-    const DIRECT_FIREBASE_URL = "https://csat-dashboard-f23e7-default-rtdb.asia-southeast1.firebasedatabase.app/.json";
-    
-    // ⚙️ Configurations
-    const CONFIG = {
-      EXCLUDED_SHEETS: ["Ticketing", "Onboarding Data", "Master", "Tasks", "NSDC", "Users"], 
-    };
 
     const theme = { orange: "#ff7b2c", navy: "#1f2235", blue: "#3498db", light: "#f0f2f5", purple: "#9b59b6", success: "#2ecc71", danger: "#e74c3c", warning: "#f39c12" };
     const $ = (id) => document.getElementById(id);
@@ -390,9 +382,6 @@
 
     const el = {};
     const charts = { gauge: null, dist: null, onboarding: null };
-    
-    // THE FIREBASE BRAIN (Stores Data Locally for Instant Loading)
-    let globalDataCache = {}; 
 
     // ==========================================
     // 🔐 LOGIN & AUTHENTICATION
@@ -448,7 +437,7 @@
       dash: { title: "DASHBOARD", loader: loadDashboardData },
       feed: { title: "FEEDBACK", loader: loadFeedbackData },
       tick: { title: "TICKETING", loader: loadTickets },
-      onboard: { title: "ONBOARDING: APP", loader: loadOnboardTable }, // Uses external GET
+      onboard: { title: "ONBOARDING: APP", loader: loadOnboardTable },
       enroll: { title: "ONBOARDING: DATA", loader: loadEnrollData },
       students: { title: "MASTER STUDENT DATABASE", loader: loadStudentDatabase },
       state: { title: "STATE DATA", loader: loadStateData },
@@ -471,168 +460,69 @@
     function rowOrEmpty(rows, colspan, message = "No Data Found") { return rows.length ? rows.join("") : `<tr><td colspan="${colspan}" style="text-align:center;">${message}</td></tr>`; }
     function setSyncing(isSyncing) { $$(".card, .content-section, .table-wrapper").forEach((n) => n.classList.toggle("syncing", isSyncing)); }
 
-    // THE MAGIC FUNCTION (Downloads entire Firebase DB in 0.1s)
-    async function syncDirectFirebase() {
+    async function request(method, action, payload = {}) {
       try {
-        const res = await fetch(DIRECT_FIREBASE_URL);
-        if(!res.ok) throw new Error("Firebase fetch failed");
-        globalDataCache = await res.json();
-      } catch(e) {
-        console.error("Firebase Direct Sync Error:", e);
-      }
+        let response;
+        if (method === "GET") {
+          const url = new URL(API_URL); url.searchParams.set("action", action);
+          Object.entries(payload).forEach(([key, value]) => url.searchParams.set(key, value ?? ""));
+          response = await fetch(url.toString(), { method: "GET", redirect: "follow", credentials: "omit" });
+        } else {
+          response = await fetch(API_URL, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify({ action, data: payload }), redirect: "follow", credentials: "omit" });
+        }
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        return await response.json();
+      } catch (error) { return { error: error.message || String(error) }; }
     }
 
-    // Still need this for writing data (saving tickets, tasks) and external sheet GET
-    async function apiPost(action, dataObj = {}) {
-      try {
-        let res = await fetch(API_URL, {
-          method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-          body: JSON.stringify({ action: action, data: dataObj }),
-          redirect: "follow", credentials: "omit"
-        });
-        return await res.json();
-      } catch (e) { return { error: e }; }
-    }
-
-    async function apiGetExt(action) {
-      try {
-         const url = new URL(API_URL); url.searchParams.set("action", action);
-         const res = await fetch(url.toString(), { method: "GET", redirect: "follow", credentials: "omit" });
-         return await res.json();
-      } catch(e) { return []; }
-    }
-
-    function getFormattedDate(dateObj, format="dd-MM-yyyy") {
-      if(!dateObj || isNaN(dateObj.getTime())) return "-";
-      const d = dateObj.getDate().toString().padStart(2, '0');
-      const mNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-      const mStr = mNames[dateObj.getMonth()];
-      const mNum = (dateObj.getMonth()+1).toString().padStart(2, '0');
-      const y = dateObj.getFullYear();
-      const hr = dateObj.getHours().toString().padStart(2, '0');
-      const min = dateObj.getMinutes().toString().padStart(2, '0');
-      
-      if(format === "dd-MM-yyyy") return `${d}-${mNum}-${y}`;
-      if(format === "dd-MMM HH:mm") return `${d}-${mStr} ${hr}:${min}`;
-      if(format === "dd-MMM-yyyy HH:mm") return `${d}-${mStr}-${y} ${hr}:${min}`;
-      if(format === "MMM-yyyy") return `${mStr}-${y}`;
-      return `${d}-${mStr}`;
-    }
-
+    function apiGet(action, params = {}) { return request("GET", action, params); }
+    function apiPost(action, data = {}) { return request("POST", action, data); }
 
     // ==========================================
-    // 📊 DATA PROCESSING (FROM LOCAL CACHE)
+    // 📊 DATA LOADERS
     // ==========================================
-    
-    function findKey(row, keywords) {
-      const rowKeys = Object.keys(row).map(k => k.toLowerCase());
-      const idx = rowKeys.findIndex(k => keywords.some(w => k.includes(w)));
-      return idx !== -1 ? Object.keys(row)[idx] : null;
+    function destroyChart(name) { if (charts[name]) { charts[name].destroy(); charts[name] = null; } }
+    function renderCharts(stats) {
+      destroyChart("gauge"); destroyChart("dist");
+      const centerPlugin = { id: "centerPlugin", afterDraw(chart) { const { ctx, chartArea } = chart; const { top, bottom, left, right, height } = chartArea; const centerX = (left + right) / 2; const centerY = (top + bottom) / 2; ctx.save(); ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.font = `bold ${(height / 3).toFixed(0)}px Segoe UI`; ctx.fillStyle = "#000"; ctx.fillText(stats.nps, centerX, centerY + (height / 8)); ctx.font = `600 ${(height / 8).toFixed(0)}px Segoe UI`; ctx.fillStyle = "#888"; ctx.fillText("CSAT", centerX, centerY + (height / 3.2)); ctx.restore(); } };
+      charts.gauge = new Chart($("gaugeChart"), { type: "doughnut", data: { datasets: [{ data: [stats.nps + 100, 200 - (stats.nps + 100)], backgroundColor: [theme.orange, theme.light], borderWidth: 0, cutout: "82%" }] }, options: { responsive: true, maintainAspectRatio: false, rotation: -90, circumference: 180, plugins: { legend: { display: false }, datalabels: { display: false } } }, plugins: [centerPlugin] });
+      charts.dist = new Chart($("distChart"), { type: "pie", data: { labels: [`Promoters: ${stats.promoters}`, `Passives: ${stats.passives}`, `Detractors: ${stats.detractors}`], datasets: [{ data: [stats.promoters, stats.passives, stats.detractors], backgroundColor: [theme.orange, "#cbd5e1", theme.navy] }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: "right", labels: { boxWidth: 12, font: { size: 13, weight: "bold" } } }, datalabels: { display: false } } } });
+    }
+
+    function renderOnboardingChart(chartData) {
+      destroyChart("onboarding"); const canvas = $("onboardingChart"); const ctx = canvas.getContext("2d"); ctx.clearRect(0, 0, canvas.width, canvas.height);
+      if (!chartData || !chartData.labels || chartData.labels.length === 0) { ctx.font = "14px Segoe UI"; ctx.fillStyle = "#888"; ctx.textAlign = "center"; ctx.fillText("No Enrollment Data Available", canvas.width / 2 || 250, 100); return; }
+      charts.onboarding = new Chart(canvas, { type: "line", data: { labels: chartData.labels, datasets: [{ label: "Enrollments", data: chartData.data, borderColor: theme.blue, backgroundColor: "rgba(52, 152, 219, 0.2)", borderWidth: 2, fill: true, tension: 0.3, pointBackgroundColor: theme.blue, pointRadius: 4 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, datalabels: { display: true, align: "top", color: theme.navy, font: { weight: "bold", size: 11 } } }, scales: { y: { beginAtZero: true, grid: { color: "#eee" }, ticks: { stepSize: 1 } }, x: { grid: { display: false } } } } });
     }
 
     async function loadDashboardData() {
-      setSyncing(true);
-      await syncDirectFirebase(); // Get fresh data
-      
-      const p = { session: el["dash-session"].value, rating: el["dash-rating"].value, start: el["dash-start"].value, end: el["dash-end"].value };
-      const calc = calculateAll(p);
-      const tickets = getTickets();
-      
-      el["total"].textContent = calc.stats.total; 
-      el["untouched-count"].textContent = tickets.filter(t => t.status === 'Untouched').length; 
-      el["solved-count"].textContent = tickets.filter(t => t.status === 'Solved').length; 
-      el["onboard-count"].textContent = "Loading..."; // External sheet needs time
-      el["enrolled-count"].textContent = getEnrolledStats(); 
-      
-      renderCharts(calc.stats); 
-      renderOnboardingChart(getOnboardingChartData()); 
-      
-      // Load external stat in background
-      apiGetExt('getOnboardingTable').then(res => {
-         el["onboard-count"].textContent = res && !res.error ? res.length : 0;
-      });
-
+      setSyncing(true); const res = await apiGet("getDashboardData", { session: el["dash-session"].value, rating: el["dash-rating"].value, start: el["dash-start"].value, end: el["dash-end"].value });
+      if (res && !res.error) { el["total"].textContent = res.stats.total; el["untouched-count"].textContent = res.untouched; el["solved-count"].textContent = res.solved; el["onboard-count"].textContent = res.onboardCount; el["enrolled-count"].textContent = res.enrolledCount; renderCharts(res.stats); renderOnboardingChart(res.chartData); }
       setSyncing(false);
     }
 
-    function calculateAll(filters) {
-      let stats = { promoters: 0, passives: 0, detractors: 0, total: 0 };
-      let feedbacks = [];
-      const startLimit = filters.start ? new Date(filters.start).getTime() : null;
-      const endLimit = filters.end ? new Date(filters.end).setHours(23,59,59,999) : null;
-      const targetRating = (filters.rating && filters.rating !== "All") ? Number(filters.rating) : null;
-
-      Object.keys(globalDataCache).forEach(name => {
-        if (CONFIG.EXCLUDED_SHEETS.includes(name) || (filters.session && filters.session !== "All" && name !== filters.session)) return;
-        const sheetData = globalDataCache[name]; if (!sheetData) return;
-
-        Object.values(sheetData).forEach(row => {
-          const kDate = findKey(row, ["timestamp", "date", "तारीख"]);
-          const kRate = findKey(row, ["rate", "score", "satisfied", "rating"]);
-          const kMob = findKey(row, ["mobile", "phone", "contact", "whatsapp", "संपर्क"]);
-          const kName = findKey(row, ["name", "नाम"]);
-          const kFeed = findKey(row, ["feedback", "remark", "comment", "suggestion", "सुझाव"]);
-
-          if (!kDate || !kRate || !row[kRate]) return;
-          const rowTime = new Date(row[kDate]).getTime();
-          if (isNaN(rowTime) || (startLimit && rowTime < startLimit) || (endLimit && rowTime > endLimit)) return;
-
-          const rating = parseInt(row[kRate].toString().replace(/\D/g, ''));
-          if (isNaN(rating) || (targetRating && rating !== targetRating)) return;
-
-          if (rating >= 4) stats.promoters++; else if (rating === 3) stats.passives++; else if (rating >= 1) stats.detractors++;
-
-          if (feedbacks.length < 300) {
-            let mobileNo = "N/A";
-            if (kMob && row[kMob]) mobileNo = String(row[kMob]);
-            else { const phone = Object.values(row).find(cell => { let str = String(cell).replace(/\D/g, ''); return str.length >= 10 && str.length <= 15; }); if (phone) mobileNo = String(phone).trim(); }
-            feedbacks.push({ date: getFormattedDate(new Date(rowTime)), ts: rowTime, session: name, name: kName ? String(row[kName] || "Anonymous") : "Anonymous", mobile: mobileNo, rating: rating, comment: kFeed ? String(row[kFeed] || "-") : "-" });
-          }
-        });
-      });
-      stats.total = stats.promoters + stats.passives + stats.detractors;
-      stats.nps = stats.total === 0 ? 0 : Math.round(((stats.promoters - stats.detractors) / stats.total) * 100);
-      return { stats, feedbacks: feedbacks.sort((a,b) => b.ts - a.ts) };
-    }
-
     async function loadFeedbackData() {
-      setSyncing(true); await syncDirectFirebase();
-      const calc = calculateAll({ session: el["feed-session"].value, rating: el["feed-rating"].value, start: el["feed-start"].value, end: el["feed-end"].value });
-      const rows = calc.feedbacks.map((r) => `<tr><td>${escapeHtml(r.date)}</td><td>${escapeHtml(r.session)}</td><td><strong>${escapeHtml(r.name)}</strong></td><td>${escapeHtml(r.mobile)}</td><td>${makeBadge(`${r.rating} ★`, theme.orange)}</td><td>${escapeHtml(r.comment)}</td></tr>`);
+      setSyncing(true); const res = await apiGet("getFeedbackData", { session: el["feed-session"].value, rating: el["feed-rating"].value, start: el["feed-start"].value, end: el["feed-end"].value });
+      const rows = (res && res.feedbacks ? res.feedbacks : []).map((r) => `<tr><td>${escapeHtml(r.date)}</td><td>${escapeHtml(r.session)}</td><td><strong>${escapeHtml(r.name)}</strong></td><td>${escapeHtml(r.mobile)}</td><td>${makeBadge(`${r.rating} ★`, theme.orange)}</td><td>${escapeHtml(r.comment)}</td></tr>`);
       el["feed-body"].innerHTML = rowOrEmpty(rows, 6); setSyncing(false);
     }
 
     /* --- TICKETING --- */
     function toggleDetails(rowId) { const details = $("details-" + rowId); const button = $("btn-" + rowId); if (!details || !button) return; const isHidden = details.style.display === "none" || details.style.display === ""; details.style.display = isHidden ? "table-row" : "none"; button.style.transform = isHidden ? "rotate(90deg)" : "rotate(0deg)"; }
     
-    function getTickets() {
-      const tNode = globalDataCache["Ticketing"]; if (!tNode) return [];
-      return Object.keys(tNode).map(key => {
-        const r = tNode[key]; const rowNum = parseInt(key.replace("row_", "")) + 1;
-        const kDate = findKey(r, ["raised"]); const kRes = findKey(r, ["resolved"]);
-        return {
-          row: rowNum,
-          dateRaised: (kDate && r[kDate]) ? getFormattedDate(new Date(r[kDate]), "dd-MMM HH:mm") : "-",
-          name: r["Name"] || r["Learner_Name"] || "-", phone: r["Phone"] || "-", email: r["Email"] || "-",
-          issue: r["Issue"] || r["Issue_Type"] || "-", remark: r["Remark"] || "-", status: r["Status"] || "Untouched",
-          course: r["Course"] || "N/A", source: r["Source"] || "N/A", assigned: r["Assigned_To"] || r["Assigned To"] || "Unassigned",
-          priority: r["Priority"] || "Medium", tat: r["TAT"] || "-", raisedBy: r["Raised_By"] || r["Raised By"] || "-",
-          dateResolved: (kRes && r[kRes]) ? getFormattedDate(new Date(r[kRes]), "dd-MMM HH:mm") : "-"
-        };
-      }).filter(t => t.name !== "-" && t.issue !== "-").reverse();
-    }
-
     async function loadTickets() {
-      setSyncing(true); await syncDirectFirebase();
-      const list = getTickets();
-      const rows = list.map((t) => {
+      setSyncing(true); const list = await apiGet("getTickets");
+      const rows = (list && !list.error ? list : []).map((t) => {
         const priorityColor = t.priority === "High" || t.priority === "Urgent" ? theme.danger : t.priority === "Medium" ? theme.warning : theme.blue; const statusColor = t.status === "Solved" ? theme.success : t.status === "Escalated" ? theme.warning : theme.danger; const tatHtml = t.tat && t.tat !== "-" && t.tat !== "N/A" ? `<span class="badge" style="background:#3d4466; font-size:11px;">${escapeHtml("⏱️ " + t.tat)}</span>` : `<span style="color:#aaa; font-size:12px; font-weight:600;">Pending</span>`; let issueRemark = t.remark || "-"; let resolutionRemark = ""; if (issueRemark.includes("[Res]:")) { const parts = issueRemark.split("[Res]:"); issueRemark = parts[0].trim(); resolutionRemark = parts.slice(1).join("\nUpdate: ").trim(); } const serializedTicket = encodeURIComponent(JSON.stringify(t));
         return `<tr class="main-row" style="cursor:pointer;" data-toggle-row="${t.row}"><td style="text-align:center;"><button id="btn-${t.row}" class="toggle-btn" style="pointer-events:none;">▶</button></td><td>${escapeHtml(t.dateRaised)}</td><td><strong>${escapeHtml(t.name)}</strong></td><td>${escapeHtml(t.course)}</td><td><strong>${escapeHtml(t.issue)}</strong></td><td>${makeBadge(t.status, statusColor)}</td></tr><tr id="details-${t.row}" style="display:none;"><td colspan="6" style="padding:0; border-bottom:1px solid #eee;"><div class="detail-row-content"><div><h4 style="margin:0 0 10px; font-size:13px; color:var(--secondary); text-transform:uppercase;">Details</h4><p style="margin:5px 0; font-size:13px;"><strong>Phone:</strong> ${escapeHtml(t.phone)}</p><p style="margin:5px 0; font-size:13px;"><strong>Source:</strong> ${escapeHtml(t.source)}</p><p style="margin:5px 0; font-size:13px;"><strong>Assigned To:</strong> ${escapeHtml(t.assigned)}</p><p style="margin:8px 0; font-size:13px;"><strong>Priority:</strong> <span class="badge" style="background:${priorityColor}; font-size:10px; padding:3px 8px;">${escapeHtml(t.priority)}</span></p></div><div><h4 style="margin:0 0 10px; font-size:13px; color:var(--secondary); text-transform:uppercase;">Timeline & Remarks</h4><p style="margin:5px 0; font-size:13px;"><strong>TAT:</strong> ${tatHtml}</p><p style="margin:5px 0; font-size:13px;"><strong>Resolved On:</strong> ${escapeHtml(t.dateResolved)}</p><p style="margin:5px 0; font-size:13px; color: var(--purple);"><strong>Raised By:</strong> ${escapeHtml(t.raisedBy || "-")}</p><div style="margin-top:10px; padding:10px; background:#fff; border-radius:6px; border:1px solid #eee;"><strong style="font-size:12px; color:#888;">Issue:</strong><p style="margin:5px 0 0; font-size:13px;">${escapeHtml(issueRemark)}</p>${resolutionRemark ? `<div style="margin-top:12px; padding-top:10px; border-top:1px dashed #ddd;"><strong style="font-size:12px; color:#888;">Resolution:</strong><p style="margin:5px 0 0; font-size:13px; color:${t.status === "Escalated" ? theme.warning : theme.success}; font-weight:600;">${escapeHtml(resolutionRemark)}</p></div>` : ""}</div></div><div style="border-left:1px solid #ddd; padding-left:20px; min-width:150px;"><h4 style="margin:0 0 10px; font-size:13px; color:var(--secondary); text-transform:uppercase;">Actions</h4>${t.status === "Solved" ? `<div style="padding-top:10px;"><span style="color:${theme.success}; font-size:13px; font-weight:bold;">✔️ Closed</span></div>` : `<div style="display:flex; flex-direction:column; gap:8px;"><select data-status-row="${t.row}" style="padding:8px; font-size:12px; border:1px solid #ddd; border-radius:5px;"><option value="Untouched" ${t.status === "Untouched" ? "selected" : ""}>Untouched</option><option value="Escalated" ${t.status === "Escalated" ? "selected" : ""}>Escalated</option><option value="Solved" ${t.status === "Solved" ? "selected" : ""}>Solved</option></select><button class="edit-ticket-btn" data-ticket="${serializedTicket}" style="background:var(--primary); border:none; border-radius:5px; padding:8px; cursor:pointer; font-size:12px; font-weight:bold; color:white;">Edit Info</button></div>`}</div></div></td></tr>`;
       }); el["tick-body"].innerHTML = rowOrEmpty(rows, 6); setSyncing(false);
     }
     
+    // 👇 FIX: ESCALATION DROPDOWN LOGIC ADDED HERE
   async function handleStatusChange(row, status) { 
-      let remark = ""; let escalateTo = "";
+      let remark = ""; 
+      let escalateTo = "";
+      
       if (status === "Solved") { 
         const { value } = await Swal.fire({ title: "Resolution Remark", input: "text", showCancelButton: true, confirmButtonColor: theme.success }); 
         if (value) remark = value; else if (value === undefined) { await loadTickets(); return; } 
@@ -643,34 +533,70 @@
           html: `
             <div style="text-align:left;">
               <label style="font-size:13px; font-weight:bold; color:var(--secondary);">Escalate To (Select Multiple):</label>
+              
               <div style="max-height: 160px; overflow-y: auto; border: 1px solid #ccc; padding: 12px; border-radius: 5px; margin-top: 5px; margin-bottom: 15px; background: #fff;">
-                <label style="display:flex; align-items:center; margin-bottom:10px; cursor:pointer; font-size:14px;"><input type="checkbox" class="esc-checkbox" value="prateek@skillinabox.in" style="width:16px; height:16px; margin:0 10px 0 0; cursor:pointer;"> <span><b>Prateek</b> - CEO</span></label>
-                <label style="display:flex; align-items:center; margin-bottom:10px; cursor:pointer; font-size:14px;"><input type="checkbox" class="esc-checkbox" value="kanisk@skillinabox.in" style="width:16px; height:16px; margin:0 10px 0 0; cursor:pointer;"> <span><b>Kanisk</b> - Operations</span></label>
-                <label style="display:flex; align-items:center; margin-bottom:10px; cursor:pointer; font-size:14px;"><input type="checkbox" class="esc-checkbox" value="tarundeep@skillinabox.in" style="width:16px; height:16px; margin:0 10px 0 0; cursor:pointer;"> <span><b>Tarundeep</b> - Admin</span></label>
-                <label style="display:flex; align-items:center; margin-bottom:10px; cursor:pointer; font-size:14px;"><input type="checkbox" class="esc-checkbox" value="Pradeep@skillinabox.in" style="width:16px; height:16px; margin:0 10px 0 0; cursor:pointer;"> <span><b>Pradeep</b> - Accounts</span></label>
-                <label style="display:flex; align-items:center; margin-bottom:10px; cursor:pointer; font-size:14px;"><input type="checkbox" class="esc-checkbox" value="rohit@skillinabox.in" style="width:16px; height:16px; margin:0 10px 0 0; cursor:pointer;"> <span><b>Rohit</b> - Finance</span></label>
-                <label style="display:flex; align-items:center; margin-bottom:10px; cursor:pointer; font-size:14px;"><input type="checkbox" class="esc-checkbox" value="trainers@skillinabox.in" style="width:16px; height:16px; margin:0 10px 0 0; cursor:pointer;"> <span><b>Trainers</b> - Product</span></label>
-                <label style="display:flex; align-items:center; margin-bottom:0px; cursor:pointer; font-size:14px;"><input type="checkbox" class="esc-checkbox" value="kishlay@skillinabox.in" style="width:16px; height:16px; margin:0 10px 0 0; cursor:pointer;"> <span><b>Kishlay</b> - Sales</span></label>
+                <label style="display:flex; align-items:center; margin-bottom:10px; cursor:pointer; font-size:14px;">
+                  <input type="checkbox" class="esc-checkbox" value="prateek@skillinabox.in" style="width:16px; height:16px; margin:0 10px 0 0; cursor:pointer;"> 
+                  <span><b>Prateek</b> - CEO</span>
+                </label>
+                <label style="display:flex; align-items:center; margin-bottom:10px; cursor:pointer; font-size:14px;">
+                  <input type="checkbox" class="esc-checkbox" value="kanisk@skillinabox.in" style="width:16px; height:16px; margin:0 10px 0 0; cursor:pointer;"> 
+                  <span><b>Kanisk</b> - Operations</span>
+                </label>
+                <label style="display:flex; align-items:center; margin-bottom:10px; cursor:pointer; font-size:14px;">
+                  <input type="checkbox" class="esc-checkbox" value="tarundeep@skillinabox.in" style="width:16px; height:16px; margin:0 10px 0 0; cursor:pointer;"> 
+                  <span><b>Tarundeep</b> - Admin</span>
+                </label>
+                <label style="display:flex; align-items:center; margin-bottom:10px; cursor:pointer; font-size:14px;">
+                  <input type="checkbox" class="esc-checkbox" value="Pradeep@skillinabox.in" style="width:16px; height:16px; margin:0 10px 0 0; cursor:pointer;"> 
+                  <span><b>Pradeep</b> - Accounts</span>
+                </label>
+                <label style="display:flex; align-items:center; margin-bottom:10px; cursor:pointer; font-size:14px;">
+                  <input type="checkbox" class="esc-checkbox" value="rohit@skillinabox.in" style="width:16px; height:16px; margin:0 10px 0 0; cursor:pointer;"> 
+                  <span><b>Rohit</b> - Finance</span>
+                </label>
+                <label style="display:flex; align-items:center; margin-bottom:10px; cursor:pointer; font-size:14px;">
+                  <input type="checkbox" class="esc-checkbox" value="trainers@skillinabox.in" style="width:16px; height:16px; margin:0 10px 0 0; cursor:pointer;"> 
+                  <span><b>Trainers</b> - Product</span>
+                </label>
+                <label style="display:flex; align-items:center; margin-bottom:0px; cursor:pointer; font-size:14px;">
+                  <input type="checkbox" class="esc-checkbox" value="kishlay@skillinabox.in" style="width:16px; height:16px; margin:0 10px 0 0; cursor:pointer;"> 
+                  <span><b>Kishlay</b> - Sales</span>
+                </label>
               </div>
+
               <label style="font-size:13px; font-weight:bold; color:var(--secondary);">Escalation Reason:</label>
               <textarea id="esc-reason" style="width:100%; padding:10px; margin-top:5px; border-radius:5px; border:1px solid #ccc; min-height:80px;" placeholder="Why are you escalating this?"></textarea>
             </div>
           `,
-          showCancelButton: true, confirmButtonColor: theme.warning,
+          showCancelButton: true,
+          confirmButtonColor: theme.warning,
           preConfirm: () => {
             const checkboxes = document.querySelectorAll('.esc-checkbox:checked');
             const selectedEmails = Array.from(checkboxes).map(cb => cb.value);
+            const to = selectedEmails.join(",");
             const reason = document.getElementById("esc-reason").value.trim();
-            if(selectedEmails.length === 0 || !reason) { Swal.showValidationMessage("Please select at least one person and enter a reason!"); return false; }
-            return { to: selectedEmails.join(","), reason };
+            
+            if(selectedEmails.length === 0 || !reason) { 
+              Swal.showValidationMessage("Please select at least one person and enter a reason!"); 
+              return false; 
+            }
+            return { to, reason };
           }
         });
-        if (value) { escalateTo = value.to; remark = value.reason; } else { await loadTickets(); return; }
+        
+        if (value) {
+          escalateTo = value.to;
+          remark = value.reason;
+        } else {
+          await loadTickets(); return;
+        }
       }
       
       setSyncing(true); await apiPost("updateTicketStatus", { row, status, remark, escalateTo }); await loadTickets(); setSyncing(false); Swal.fire({ icon: "success", title: "Updated!", showConfirmButton: false, timer: 1500 }); 
     }
     
+    // 👇 FIX: RAISED BY LOGIC ADDED HERE
     async function openTicketModal() { 
       const { value } = await Swal.fire({ 
         title: "", width: "550px", showCancelButton: true, confirmButtonText: "Submit Ticket", cancelButtonText: "Cancel", confirmButtonColor: theme.orange, cancelButtonColor: "#aaa", 
@@ -687,22 +613,14 @@
     }
     
     async function openEditModal(ticket) { const { value } = await Swal.fire({ title: "Edit Ticket", showCancelButton: true, confirmButtonColor: theme.orange, cancelButtonColor: "#aaa", confirmButtonText: "Save", html: `<div style="text-align: left; margin-top: 15px;"><div style="margin-bottom: 15px;"><label style="font-size: 13px; font-weight: 600; color: var(--secondary);">Assign To</label><select id="e-a" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px; margin-top: 5px;"><option value="Unassigned" ${ticket.assigned === "Unassigned" ? "selected" : ""}>Unassigned</option><option value="Kumud" ${ticket.assigned === "Kumud" ? "selected" : ""}>Kumud</option><option value="Sanskriti" ${ticket.assigned === "Sanskriti" ? "selected" : ""}>Sanskriti</option><option value="Dhananjaya" ${ticket.assigned === "Dhananjaya" ? "selected" : ""}>Dhananjaya</option></select></div><div><label style="font-size: 13px; font-weight: 600; color: var(--secondary);">Priority</label><select id="e-p" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px; margin-top: 5px;"><option value="Urgent" ${ticket.priority === "Urgent" ? "selected" : ""}>Urgent</option><option value="High" ${ticket.priority === "High" ? "selected" : ""}>High</option><option value="Medium" ${ticket.priority === "Medium" ? "selected" : ""}>Medium</option><option value="Low" ${ticket.priority === "Low" ? "selected" : ""}>Low</option></select></div></div>`, preConfirm: () => ({ assigned: $("e-a").value, priority: $("e-p").value, course: ticket.course, source: ticket.source }) }); if (!value) return; setSyncing(true); await apiPost("editTicketDetails", { row: ticket.row, info: value }); await loadTickets(); setSyncing(false); Swal.fire({ icon: "success", title: "Saved!", showConfirmButton: false, timer: 1500 }); }
-    
-    // External API dependent
-    async function loadOnboardTable() { setSyncing(true); const list = await apiGetExt("getOnboardingTable"); const rows = (list && !list.error ? list : []).map((r) => `<tr><td><strong>${escapeHtml(r.name)}</strong></td><td>${escapeHtml(r.phone)}</td><td>${escapeHtml(r.email)}</td><td>${makeBadge(r.program, theme.blue)}</td><td>${escapeHtml(r.source)}</td></tr>`); el["onboard-body"].innerHTML = rowOrEmpty(rows, 5); setSyncing(false); }
-    
+    async function loadOnboardTable() { setSyncing(true); const list = await apiGet("getOnboardingTable"); const rows = (list && !list.error ? list : []).map((r) => `<tr><td><strong>${escapeHtml(r.name)}</strong></td><td>${escapeHtml(r.phone)}</td><td>${escapeHtml(r.email)}</td><td>${makeBadge(r.program, theme.blue)}</td><td>${escapeHtml(r.source)}</td></tr>`); el["onboard-body"].innerHTML = rowOrEmpty(rows, 5); setSyncing(false); }
     async function openEnrollModal() { const { value } = await Swal.fire({ title: "New Enrollment", showCancelButton: true, confirmButtonColor: theme.orange, cancelButtonColor: "#aaa", confirmButtonText: "Save Data", html: `<div style="text-align:left; margin-top:15px;"><div style="margin-bottom:15px;"><label style="font-size:13px; font-weight:600; color:var(--secondary);">Course Name *</label><select id="en-c" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px; margin-top:5px;"><option value="" disabled selected>Select Course...</option><option value="Activation">Activation</option><option value="Fashion Designing">Fashion Designing</option><option value="Cosmetology">Cosmetology</option><option value="Others">Others</option></select></div><div style="margin-bottom:15px;"><label style="font-size:13px; font-weight:600; color:var(--secondary);">Enrollment Count *</label><input type="number" id="en-count" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px; margin-top:5px;" placeholder="Number of enrollments"></div><div><label style="font-size:13px; font-weight:600; color:var(--secondary);">Onboarded By *</label><select id="en-by" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px; margin-top:5px;"><option value="Kumud">Kumud</option><option value="Sanskriti">Sanskriti</option><option value="Dhananjaya">Dhananjaya</option><option value="Web">Web (Form)</option></select></div></div>`, preConfirm: () => { const course = $("en-c").value, count = $("en-count").value, by = $("en-by").value; if (!course || !count) { Swal.showValidationMessage("Please fill all fields"); return false; } const now = new Date(); return { course, month: now.toLocaleString("default", { month: "short" }) + "-" + now.getFullYear(), count, by }; } }); if (!value) return; setSyncing(true); await apiPost("saveEnrollmentData", value); await loadEnrollData(); setSyncing(false); Swal.fire({ icon: "success", title: "Saved!", showConfirmButton: false, timer: 1500 }); }
-    
-    function getEnrollmentData() { const obNode = globalDataCache["Onboarding Data"]; if (!obNode) return []; return Object.keys(obNode).map(k => { const r = obNode[k]; const kDate = findKey(r, ["date"]); const kMonth = findKey(r, ["month"]); return { date: (kDate && r[kDate]) ? getFormattedDate(new Date(r[kDate]), "dd-MMM-yyyy HH:mm") : "-", course: r["Course"] || "-", month: (kMonth && r[kMonth]) ? r[kMonth] : "-", count: r["Count"] || "0", by: r["Onboarded_By"] || r["Onboarded By"] || "-" }; }).reverse(); }
-    function getEnrolledStats() { const obNode = globalDataCache["Onboarding Data"]; if (!obNode) return 0; return Object.values(obNode).reduce((acc, r) => { const kCount = findKey(r, ["count"]); return acc + (kCount ? parseInt(r[kCount]) || 0 : 0); }, 0); }
-    function getOnboardingChartData() { const obNode = globalDataCache["Onboarding Data"]; if (!obNode) return { labels: [], data: [] }; const aggregated = {}; Object.values(obNode).forEach(r => { const kCount = findKey(r, ["count"]); const kDate = findKey(r, ["date"]); if (!kCount || !kDate || !r[kCount]) return; let dStr = getFormattedDate(new Date(r[kDate]), "dd-MMM"); aggregated[dStr] = (aggregated[dStr] || 0) + (parseInt(r[kCount]) || 0); }); return { labels: Object.keys(aggregated), data: Object.values(aggregated) }; }
-    
-    async function loadEnrollData() { setSyncing(true); await syncDirectFirebase(); const list = getEnrollmentData(); const rows = list.map((r) => `<tr><td>${escapeHtml(r.date)}</td><td><strong>${escapeHtml(r.course)}</strong></td><td>${makeBadge(r.count, theme.blue)}</td><td>${escapeHtml(r.by)}</td></tr>`); el["enroll-body"].innerHTML = rowOrEmpty(rows, 4); setSyncing(false); }
+    async function loadEnrollData() { setSyncing(true); const list = await apiGet("getEnrollmentData"); const rows = (list && !list.error ? list : []).map((r) => `<tr><td>${escapeHtml(r.date)}</td><td><strong>${escapeHtml(r.course)}</strong></td><td>${makeBadge(r.count, theme.blue)}</td><td>${escapeHtml(r.by)}</td></tr>`); el["enroll-body"].innerHTML = rowOrEmpty(rows, 4); setSyncing(false); }
 
     // ==========================================
     // 🎓 STUDENT DATABASE LOGIC
     // ==========================================
-    let globalStudentArray = [];
+    let globalStudentData = [];
 
     function toggleStdDetails(rowId) {
       const details = $("details-std-" + rowId); const button = $("btn-std-" + rowId);
@@ -711,42 +629,25 @@
       details.style.display = isHidden ? "table-row" : "none"; button.style.transform = isHidden ? "rotate(90deg)" : "rotate(0deg)";
     }
 
-    function getStudentDatabase() {
-      const stdNode = globalDataCache["Student Database"]; if (!stdNode) return [];
-      return Object.keys(stdNode).map(key => {
-        const r = stdNode[key]; 
-        const kDate = findKey(r, ["month", "date", "timeline"]);
-        let dateValue = "-"; if (kDate && r[kDate]) { const d = new Date(r[kDate]); dateValue = !isNaN(d.getTime()) ? getFormattedDate(d, "MMM-yyyy") : r[kDate]; }
-        return {
-          name: r[findKey(r, ["name", "student", "learner"])] || "-",
-          phone: r[findKey(r, ["phone", "mobile", "contact"])] || "-",
-          email: r[findKey(r, ["email", "mail"])] || "-",
-          course: r[findKey(r, ["course", "program", "batch"])] || "-",
-          date: dateValue,
-          address: r[findKey(r, ["address", "city", "location"])] || "-",
-          counsellor: r[findKey(r, ["counsellor", "assign", "executive"])] || "",
-          state: r[findKey(r, ["state"])] || "-" 
-        };
-      }).reverse();
-    }
-
     async function loadStudentDatabase() {
-      setSyncing(true); await syncDirectFirebase();
-      globalStudentArray = getStudentDatabase(); 
-      renderStudentTable(globalStudentArray); 
+      setSyncing(true);
+      const list = await apiGet("getStudentDatabase");
+      globalStudentData = list && !list.error ? list : []; 
+      renderStudentTable(globalStudentData); 
       setSyncing(false);
     }
 
     function renderStudentTable(dataToRender) {
       const rows = dataToRender.map((s, index) => {
+        const uniqueId = s.rowId || index; 
         const counsellorName = s.counsellor || "Not Assigned / Backend Update Pending";
         return `
-        <tr class="student-row" style="cursor:pointer;" data-toggle-std="${index}">
-          <td style="text-align:center;"><button id="btn-std-${index}" class="toggle-btn" style="pointer-events:none;">▶</button></td>
+        <tr class="student-row" style="cursor:pointer;" data-toggle-std="${uniqueId}">
+          <td style="text-align:center;"><button id="btn-std-${uniqueId}" class="toggle-btn" style="pointer-events:none;">▶</button></td>
           <td><strong>${escapeHtml(s.name)}</strong></td><td>${escapeHtml(s.phone)}</td><td>${escapeHtml(s.email)}</td>
           <td>${makeBadge(s.course, theme.blue)}</td><td><strong>${escapeHtml(s.state || "-")}</strong></td><td>${escapeHtml(s.date)}</td>
         </tr>
-        <tr id="details-std-${index}" style="display:none;"><td colspan="7" style="padding:0; border-bottom:1px solid #eee;">
+        <tr id="details-std-${uniqueId}" style="display:none;"><td colspan="7" style="padding:0; border-bottom:1px solid #eee;">
           <div class="detail-row-student"><p style="margin:5px 0; font-size:13px; line-height:1.5;"><strong>📍 Address:</strong> ${escapeHtml(s.address)}</p><p style="margin:5px 0; font-size:13px; margin-top:10px;"><strong>👤 Counsellor Name:</strong> ${escapeHtml(counsellorName)}</p></div>
         </td></tr>`;
       });
@@ -758,8 +659,8 @@
       clearTimeout(searchTimeout);
       searchTimeout = setTimeout(() => {
         const input = e.target.value.toLowerCase().trim();
-        if (!input) { renderStudentTable(globalStudentArray); return; }
-        const filteredData = globalStudentArray.filter(s => {
+        if (!input) { renderStudentTable(globalStudentData); return; }
+        const filteredData = globalStudentData.filter(s => {
           const searchableText = `${s.name} ${s.phone} ${s.email} ${s.course} ${s.state || ""}`.toLowerCase();
           return searchableText.includes(input);
         });
@@ -771,128 +672,85 @@
     // 🗺️ STATE DATA LOGIC
     // ==========================================
     async function loadStateData() {
-      setSyncing(true); await syncDirectFirebase();
-      const data = getStudentDatabase();
+      setSyncing(true);
+      const list = await apiGet("getStudentDatabase");
+      const data = list && !list.error ? list : [];
+
       const stateCounts = {};
       data.forEach(s => {
         const stateName = (s.state && s.state.trim() !== "" && s.state !== "-") ? s.state.trim() : "Unknown / Not Specified";
         stateCounts[stateName] = (stateCounts[stateName] || 0) + 1;
       });
-      const sortedStates = Object.keys(stateCounts).map(key => ({ stateName: key, count: stateCounts[key] })).sort((a, b) => b.count - a.count);
-      const rows = sortedStates.map(item => `<tr><td><strong>${escapeHtml(item.stateName)}</strong></td><td>${makeBadge(item.count, theme.purple, "font-size: 14px; padding: 6px 18px;")}</td></tr>`);
+
+      const sortedStates = Object.keys(stateCounts).map(key => ({
+        stateName: key, count: stateCounts[key]
+      })).sort((a, b) => b.count - a.count);
+
+      const rows = sortedStates.map(item => `
+        <tr>
+          <td><strong>${escapeHtml(item.stateName)}</strong></td>
+          <td>${makeBadge(item.count, theme.purple, "font-size: 14px; padding: 6px 18px;")}</td>
+        </tr>
+      `);
       el["state-body"].innerHTML = rowOrEmpty(rows, 2, "No State Data Found");
       setSyncing(false);
     }
 
     /* --- NSDC, TASKS, REPORTS ... --- */
-    function getNsdcData() { const nNode = globalDataCache["NSDC"]; if(!nNode) return []; return Object.keys(nNode).map(k => { const r = nNode[k]; const kDate = findKey(r, ["date"]); return { date: (kDate && r[kDate]) ? getFormattedDate(new Date(r[kDate]), "dd-MMM-yyyy HH:mm") : "-", type: r["Action_Type"] || r["Action Type"] || "-", batch: r["Batch_Number"] || r["Batch Number"] || "-", count: r["Count"] || "0" }; }).reverse(); }
-    function getTasks() { const tNode = globalDataCache["Tasks"]; if(!tNode) return []; return Object.keys(tNode).map(k => { const r = tNode[k]; const kDate = findKey(r, ["date"]); return { row: parseInt(k.replace("row_","")) + 1, date: (kDate && r[kDate]) ? getFormattedDate(new Date(r[kDate]), "dd-MMM-yyyy HH:mm") : "-", task: r["Task_Name"] || r["Task Name"] || "-", executive: r["Executive"] || "-", status: r["Status"] || "-" }; }).reverse(); }
-    
     async function openNsdcModal(type) { const { value } = await Swal.fire({ title: type, showCancelButton: true, confirmButtonColor: type === "Enrollment" ? theme.blue : theme.success, cancelButtonColor: "#aaa", confirmButtonText: "Save Data", html: `<div style="text-align:left; margin-top:15px;"><div style="margin-bottom:15px;"><label style="font-size:13px; font-weight:600; color:var(--secondary);">Batch Number *</label><input id="n-b" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px; margin-top:5px;" placeholder="Enter Batch No."></div><div><label style="font-size:13px; font-weight:600; color:var(--secondary);">Count *</label><input type="number" id="n-c" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px; margin-top:5px;" placeholder="Enter Count"></div></div>`, preConfirm: () => { const batch = $("n-b").value.trim(), count = $("n-c").value; if (!batch || !count) { Swal.showValidationMessage("Please fill all fields"); return false; } return { type, batch, count }; } }); if (!value) return; setSyncing(true); await apiPost("saveNsdcData", value); await loadNsdcData(); setSyncing(false); Swal.fire({ icon: "success", title: "Saved!", showConfirmButton: false, timer: 1500 }); }
-    async function loadNsdcData() { setSyncing(true); await syncDirectFirebase(); const list = getNsdcData(); const rows = list.map((r) => `<tr><td>${escapeHtml(r.date)}</td><td><strong>${escapeHtml(r.type)}</strong></td><td>${escapeHtml(r.batch)}</td><td>${makeBadge(r.count, theme.blue)}</td></tr>`); el["nsdc-body"].innerHTML = rowOrEmpty(rows, 4); setSyncing(false); }
-    async function loadTasks() { setSyncing(true); await syncDirectFirebase(); const list = getTasks(); const rows = list.map((t) => `<tr><td>${escapeHtml(t.date)}</td><td><strong>${escapeHtml(t.task)}</strong></td><td>${escapeHtml(t.executive)}</td><td>${makeBadge(t.status, t.status === "Done" ? theme.success : theme.danger)}</td><td>${t.status === "Done" ? "✔️" : `<select data-task-row="${t.row}"><option value="Pending" ${t.status === "Pending" ? "selected" : ""}>Pending</option><option value="Done" ${t.status === "Done" ? "selected" : ""}>Done</option></select>`}</td></tr>`); el["tasks-body"].innerHTML = rowOrEmpty(rows, 5); setSyncing(false); }
+    async function loadNsdcData() { setSyncing(true); const list = await apiGet("getNsdcData"); const rows = (list && !list.error ? list : []).map((r) => `<tr><td>${escapeHtml(r.date)}</td><td><strong>${escapeHtml(r.type)}</strong></td><td>${escapeHtml(r.batch)}</td><td>${makeBadge(r.count, theme.blue)}</td></tr>`); el["nsdc-body"].innerHTML = rowOrEmpty(rows, 4); setSyncing(false); }
+    async function loadTasks() { setSyncing(true); const list = await apiGet("getTasks"); const rows = (list && !list.error ? list : []).map((t) => `<tr><td>${escapeHtml(t.date)}</td><td><strong>${escapeHtml(t.task)}</strong></td><td>${escapeHtml(t.executive)}</td><td>${makeBadge(t.status, t.status === "Done" ? theme.success : theme.danger)}</td><td>${t.status === "Done" ? "✔️" : `<select data-task-row="${t.row}"><option value="Pending" ${t.status === "Pending" ? "selected" : ""}>Pending</option><option value="Done" ${t.status === "Done" ? "selected" : ""}>Done</option></select>`}</td></tr>`); el["tasks-body"].innerHTML = rowOrEmpty(rows, 5); setSyncing(false); }
     async function submitTask() { const task = el["task-name"].value.trim(); if (!task) return; setSyncing(true); await apiPost("saveTask", { task, exec: el["task-exec"].value, status: el["task-status"].value }); el["task-name"].value = ""; await loadTasks(); setSyncing(false); }
     async function updateTask(row, status) { setSyncing(true); await apiPost("updateTaskStatusRow", { row, status }); await loadTasks(); setSyncing(false); }
-    
-    function generateReportsData(filters) {
-      const startLimit = filters.start ? new Date(filters.start).getTime() : null;
-      const endLimit = filters.end ? new Date(filters.end).setHours(23,59,59,999) : null;
-      const groupBy = filters.groupBy || 'monthly'; 
-      const targetSession = (filters.session && filters.session !== "All") ? filters.session : null;
-
-      let npsReport = {}; let trainerReport = {}; 
-      const cleanTrainerName = (raw) => { if (!raw) return ""; let s = String(raw).toLowerCase().replace(/[^a-z\s]/g, '').trim().replace(/\b(mam|maam|sir|mr|mrs|miss|dr)\b/g, '').trim().replace(/\s+/g, ' '); if (s.includes('riya')) return 'Riya'; if (s.includes('jagarti') || s.includes('jagrati')) return 'Jagriti'; return s.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' '); };
-
-      Object.keys(globalDataCache).forEach(name => {
-        if (CONFIG.EXCLUDED_SHEETS.includes(name) || (targetSession && name !== targetSession)) return;
-        const sheetData = globalDataCache[name]; if (!sheetData) return;
-
-        Object.values(sheetData).forEach(row => {
-          const kDate = findKey(row, ["timestamp", "date", "तारीख"]);
-          const kRate = findKey(row, ["rate", "score", "satisfied", "rating"]);
-          const kTrainer = findKey(row, ["trainer", "faculty", "instructor", "teacher", "प्रशिक्षक"]);
-
-          if (!kDate || !kRate || !row[kRate]) return;
-          const rowTime = new Date(row[kDate]).getTime();
-          if (isNaN(rowTime) || (startLimit && rowTime < startLimit) || (endLimit && rowTime > endLimit)) return;
-
-          const rating = parseInt(row[kRate].toString().replace(/\D/g, ''));
-          if (isNaN(rating)) return;
-
-          if (!npsReport[name]) npsReport[name] = { p: 0, pass: 0, d: 0, total: 0 };
-          npsReport[name].total++;
-          if (rating >= 4) npsReport[name].p++; else if (rating === 3) npsReport[name].pass++; else if (rating >= 1) npsReport[name].d++;
-
-          if (kTrainer && row[kTrainer]) {
-            const tName = cleanTrainerName(row[kTrainer]);
-            if(tName) {
-              if (!trainerReport[tName]) trainerReport[tName] = { p: 0, pass: 0, d: 0, total: 0 };
-              trainerReport[tName].total++;
-              if (rating >= 4) trainerReport[tName].p++; else if (rating === 3) trainerReport[tName].pass++; else if (rating >= 1) trainerReport[tName].d++;
-            }
-          }
-        });
-      });
-
-      let opsReport = {}; 
-      const addOps = (dateVal, type, count) => {
-         if(!dateVal) return; const dObj = new Date(dateVal);
-         if (isNaN(dObj.getTime()) || (startLimit && dObj.getTime() < startLimit) || (endLimit && dObj.getTime() > endLimit)) return;
-         const timeKey = groupBy === 'daily' ? getFormattedDate(dObj, "dd-MMM-yyyy") : getFormattedDate(dObj, "MMM-yyyy");
-         if (!opsReport[timeKey]) opsReport[timeKey] = { tasks: 0, onboard: 0, nsdc: 0 };
-         opsReport[timeKey][type] += (parseInt(count) || 1);
-      };
-
-      const tData = globalDataCache["Tasks"]; if(tData) Object.values(tData).forEach(r => { const kDate = findKey(r, ["date"]); if(kDate) addOps(r[kDate], 'tasks', 1); });
-      const obData = globalDataCache["Onboarding Data"]; if(obData) Object.values(obData).forEach(r => { const kDate = findKey(r, ["date"]); const kCount = findKey(r, ["count"]); if(kDate) addOps(r[kDate], 'onboard', r[kCount]); });
-      const nsData = globalDataCache["NSDC"]; if(nsData) Object.values(nsData).forEach(r => { const kDate = findKey(r, ["date"]); const kCount = findKey(r, ["count"]); if(kDate) addOps(r[kDate], 'nsdc', r[kCount]); });
-
-      const formatData = (obj) => Object.keys(obj).map(k => { const v = obj[k]; return { key: k, total: v.total, nps: v.total === 0 ? 0 : Math.round(((v.p - v.d) / v.total) * 100) }; });
-      return { npsReport: formatData(npsReport).sort((a,b) => b.total - a.total), trainerReport: formatData(trainerReport).sort((a,b) => b.total - a.total), opsReport: Object.keys(opsReport).map(k => ({ key: k, ...opsReport[k] })) };
-    }
-
-    async function loadReportsData() { 
-      setSyncing(true); await syncDirectFirebase(); 
-      const res = generateReportsData({ session: el["rep-session"].value, groupBy: el["rep-group"].value, start: el["rep-start"].value, end: el["rep-end"].value }); 
-      el["rep-nps-body"].innerHTML = rowOrEmpty(res.npsReport.map((r) => `<tr><td><strong>${escapeHtml(r.key)}</strong></td><td>${escapeHtml(r.total)}</td><td>${makeBadge(r.nps, r.nps >= 50 ? theme.success : r.nps > 0 ? theme.warning : theme.danger)}</td></tr>`), 3); 
-      el["rep-trainer-body"].innerHTML = rowOrEmpty(res.trainerReport.map((r) => `<tr><td><strong>${escapeHtml(r.key)}</strong></td><td>${escapeHtml(r.total)}</td><td>${makeBadge(r.nps, r.nps >= 50 ? theme.success : r.nps > 0 ? theme.warning : theme.danger)}</td></tr>`), 3, "No Data / Missing Column"); 
-      el["rep-ops-body"].innerHTML = rowOrEmpty(res.opsReport.map((r) => `<tr><td><strong>${escapeHtml(r.key)}</strong></td><td>${escapeHtml(r.tasks || 0)}</td><td>${escapeHtml(r.onboard || 0)}</td><td>${escapeHtml(r.nsdc || 0)}</td></tr>`), 4); 
-      setSyncing(false); 
-    }
+    async function loadReportsData() { setSyncing(true); const res = await apiGet("getReportsData", { session: el["rep-session"].value, groupBy: el["rep-group"].value, start: el["rep-start"].value, end: el["rep-end"].value }); if (res && !res.error) { el["rep-nps-body"].innerHTML = rowOrEmpty(res.npsReport.map((r) => `<tr><td><strong>${escapeHtml(r.key)}</strong></td><td>${escapeHtml(r.total)}</td><td>${makeBadge(r.nps, r.nps >= 50 ? theme.success : r.nps > 0 ? theme.warning : theme.danger)}</td></tr>`), 3); el["rep-trainer-body"].innerHTML = rowOrEmpty(res.trainerReport.map((r) => `<tr><td><strong>${escapeHtml(r.key)}</strong></td><td>${escapeHtml(r.total)}</td><td>${makeBadge(r.nps, r.nps >= 50 ? theme.success : r.nps > 0 ? theme.warning : theme.danger)}</td></tr>`), 3, "No Data / Missing Column"); el["rep-ops-body"].innerHTML = rowOrEmpty(res.opsReport.map((r) => `<tr><td><strong>${escapeHtml(r.key)}</strong></td><td>${escapeHtml(r.tasks || 0)}</td><td>${escapeHtml(r.onboard || 0)}</td><td>${escapeHtml(r.nsdc || 0)}</td></tr>`), 4); } setSyncing(false); }
 
     // ==========================================
     // 💡 SIDEBAR VIEW SWITCHER
     // ==========================================
     function switchView(view) {
       const config = viewConfig[view]; if (!config) return;
+      
+      // Hide all views
       $$('[id^="view-"]').forEach((n) => n.classList.add("hidden"));
+      
+      // Remove active states from all sidebar items
       $$(".sidebar li[data-view]").forEach((n) => n.classList.remove("active"));
+      
+      // Show correct view
       $("view-" + view).classList.remove("hidden");
+      
       const activeTab = $("m-" + view); 
       if (activeTab) {
         activeTab.classList.add("active");
+        
+        // Agar yeh kisi group ke andar hai (jaise Onboarding Data), toh parent ko khula rakho
         const parentGroup = activeTab.closest('.menu-group');
-        if (parentGroup) parentGroup.classList.add('open');
+        if (parentGroup) {
+          parentGroup.classList.add('open');
+        }
       }
+      
       el["page-title"].textContent = config.title; el["mobile-view-select"].value = view;
       config.loader();
     }
 
     function initDefaultDates() { const now = new Date(); const year = now.getFullYear(); const month = String(now.getMonth() + 1).padStart(2, "0"); const lastDay = String(new Date(year, now.getMonth() + 1, 0).getDate()).padStart(2, "0"); const start = `${year}-${month}-01`; const end = `${year}-${month}-${lastDay}`; el["dash-start"].value = start; el["dash-end"].value = end; el["feed-start"].value = start; el["feed-end"].value = end; el["rep-start"].value = start; el["rep-end"].value = end; }
-    
-    function initSessions() { 
-      const list = Object.keys(globalDataCache).filter(n => !CONFIG.EXCLUDED_SHEETS.includes(n)); 
-      $$(".session-sel").forEach((select) => { 
-        const existing = new Set(Array.from(select.options).map((o) => o.value)); 
-        list.forEach((name) => { if (!existing.has(name)) { const option = document.createElement("option"); option.value = name; option.textContent = name; select.appendChild(option); } }); 
-      }); 
-    }
+    async function initSessions() { const list = await apiGet("getSessions"); if (!list || list.error) return; $$(".session-sel").forEach((select) => { const existing = new Set(Array.from(select.options).map((o) => o.value)); list.forEach((name) => { if (!existing.has(name)) { const option = document.createElement("option"); option.value = name; option.textContent = name; select.appendChild(option); } }); }); }
 
     function bindEvents() {
-      $$(".sidebar .menu-title").forEach(title => { title.addEventListener("click", () => { const group = title.closest('.menu-group'); group.classList.toggle('open'); }); });
+      // Sidebar Sub-Menu Toggle
+      $$(".sidebar .menu-title").forEach(title => {
+        title.addEventListener("click", () => {
+          const group = title.closest('.menu-group');
+          group.classList.toggle('open');
+        });
+      });
+
+      // View Switchers
       $$(".sidebar li[data-view]").forEach((item) => { item.addEventListener("click", () => switchView(item.dataset.view)); });
       el["mobile-view-select"].addEventListener("change", (e) => { switchView(e.target.value); });
       
+      // Other Actions
       $("dash-apply").addEventListener("click", loadDashboardData); $("feed-apply").addEventListener("click", loadFeedbackData); $("rep-apply").addEventListener("click", loadReportsData);
       $("raise-ticket-btn").addEventListener("click", openTicketModal); $("open-enroll-btn").addEventListener("click", openEnrollModal); $("add-task-btn").addEventListener("click", submitTask);
       $$("[data-nsdc-type]").forEach((b) => { b.addEventListener("click", () => openNsdcModal(b.dataset.nsdcType)); });
@@ -905,17 +763,18 @@
       el["tasks-body"].addEventListener("change", (e) => { const select = e.target.closest("[data-task-row]"); if (select) { updateTask(select.dataset.taskRow, select.value); } });
     }
 
-    async function initApp() {
+async function initApp() {
       cacheElements(); 
       bindEvents(); 
       initDefaultDates();
       if (window.Chart && window.ChartDataLabels) { Chart.register(ChartDataLabels); }
       
-      setSyncing(true);
-      await syncDirectFirebase(); 
-      initSessions();
-      await loadDashboardData();
-      setSyncing(false);
+      // 👇 NAYA SUPER-FAST PARALLEL LOADING LOGIC
+      // Ab dono API calls ek sath shoot hongi, ek dusre ka wait nahi karengi!
+      await Promise.all([
+        initSessions(),
+        loadDashboardData()
+      ]);
     }
 
     window.addEventListener('DOMContentLoaded', checkSavedSession);
