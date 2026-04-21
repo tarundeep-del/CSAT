@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Escalation Portal</title>
+  <script defer src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <style>
+    :root { --primary: #ff7b2c; --secondary: #1f2235; --bg: #f4f6fb; --panel: #ffffff; }
+    body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; padding: 20px; }
+    .container { max-width: 1000px; margin: 0 auto; }
+    .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+    .card { background: var(--panel); padding: 20px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+    th { text-align: left; background: #f8f9fa; padding: 12px; border-bottom: 2px solid #eee; }
+    td { padding: 12px; border-bottom: 1px solid #eee; font-size: 14px; }
+    .badge { padding: 4px 10px; border-radius: 20px; color: #fff; font-size: 11px; font-weight: bold; }
+    .hidden { display: none; }
+    .syncing { opacity: 0.5; pointer-events: none; }
+    .detail-box { background: #f9f9f9; padding: 15px; border-left: 4px solid var(--primary); margin-top: 5px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h2 style="color: var(--secondary);">Escalated Tickets 🚨</h2>
+      <button onclick="location.reload()" style="padding: 8px 15px; background: var(--primary); color: white; border: none; border-radius: 5px; cursor: pointer;">Refresh</button>
+    </div>
+
+    <div class="card" id="ticket-list">
+      <div id="loader">Loading assigned tickets...</div>
+      <table>
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Learner</th>
+            <th>Issue</th>
+            <th>Status</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody id="lite-tick-body"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    const API_URL = "<?= scriptUrl ?>"; // Auto-filled by Backend
+
+    async function loadAssignedTickets() {
+      const res = await fetch(API_URL + "?action=getTickets");
+      const list = await res.json();
+      const body = document.getElementById('lite-tick-body');
+      document.getElementById('loader').classList.add('hidden');
+      
+      // Note: You can filter by assigned name here if you want to hardcode for specific users
+      const rows = (list || []).map(t => `
+        <tr>
+          <td>${t.dateRaised}</td>
+          <td><b>${t.name}</b></td>
+          <td>${t.issue}</td>
+          <td><span class="badge" style="background: ${t.status === 'Solved' ? '#2ecc71' : '#f39c12'}">${t.status}</span></td>
+          <td><button onclick="viewDetails('${encodeURIComponent(JSON.stringify(t))}')">View</button></td>
+        </tr>
+      `).join('');
+      body.innerHTML = rows || "<tr><td colspan='5'>No tickets found.</td></tr>";
+    }
+
+    function viewDetails(data) {
+      const t = JSON.parse(decodeURIComponent(data));
+      Swal.fire({
+        title: 'Ticket Details',
+        html: `<div style="text-align:left; font-size: 14px;">
+                <p><b>Issue:</b> ${t.issue}</p>
+                <p><b>Remark:</b> ${t.remark}</p>
+                <p><b>Escalated On:</b> ${t.dateEscalated || '-'}</p>
+                <hr>
+                <label>Add Resolution Note:</label>
+                <textarea id="res-note" style="width:100%; height:60px; margin-top:5px;"></textarea>
+               </div>`,
+        showCancelButton: true,
+        confirmButtonText: 'Mark as Solved',
+        preConfirm: () => {
+          return document.getElementById('res-note').value;
+        }
+      }).then(async (result) => {
+        if (result.isConfirmed) {
+          await fetch(API_URL, {
+            method: 'POST',
+            body: JSON.stringify({ action: 'updateTicketStatus', data: { row: t.row, status: 'Solved', remark: result.value }})
+          });
+          Swal.fire('Success', 'Ticket Solved', 'success');
+          loadAssignedTickets();
+        }
+      });
+    }
+
+    window.onload = loadAssignedTickets;
+  </script>
+</body>
+</html>
