@@ -128,13 +128,7 @@
     <form id="ticketForm" onsubmit="submitForm(event)">
       <div class="form-group">
         <label>Raised By *</label>
-        <select id="raisedBy" required>
-          <option value="" disabled selected>Who is raising this ticket?</option>
-          <option value="Student">Student</option>
-          <option value="Staff">Staff</option>
-          <option value="Parent">Parent</option>
-          <option value="Other">Other</option>
-        </select>
+        <input type="text" id="raisedBy" required placeholder="Who is raising this ticket? (e.g. Self, Father, Staff Name)">
       </div>
 
       <div class="form-group">
@@ -218,7 +212,7 @@
       btn.disabled = true;
       btn.innerText = "Submitting...";
 
-      // Gather Data including the new field
+      // Gather Data
       const ticketData = {
         raisedBy: document.getElementById('raisedBy').value,
         name: document.getElementById('name').value,
