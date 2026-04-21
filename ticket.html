@@ -1,106 +1,265 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <base target="_top">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Raise a Support Ticket</title>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  
   <style>
-    :root { --primary: #ff7b2c; --secondary: #1f2235; --bg: #f4f6fb; }
-    body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; padding: 20px; }
-    .container { max-width: 900px; margin: 0 auto; background: white; padding: 30px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
-    h2 { color: var(--secondary); border-bottom: 2px solid var(--primary); padding-bottom: 10px; }
-    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-    th { text-align: left; background: #f8f9fa; padding: 12px; font-size: 13px; color: #666; }
-    td { padding: 15px; border-bottom: 1px solid #eee; font-size: 14px; }
-    .badge { padding: 4px 10px; border-radius: 20px; color: white; font-size: 11px; font-weight: bold; }
-    .btn-view { background: var(--primary); color: white; border: none; padding: 6px 12px; border-radius: 5px; cursor: pointer; }
-    .loader { text-align: center; padding: 20px; color: var(--primary); font-weight: bold; }
+    :root { 
+      --primary: #ff7b2c; 
+      --secondary: #1f2235; 
+      --bg: #f4f6fb; 
+    }
+    
+    body { 
+      margin: 0; 
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+      background: var(--bg); 
+      color: #333; 
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 20px;
+      box-sizing: border-box;
+    }
+
+    .form-container {
+      background: white;
+      padding: 40px;
+      border-radius: 15px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+      width: 100%;
+      max-width: 500px;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    .header h2 {
+      margin: 0;
+      color: var(--secondary);
+      font-size: 24px;
+      font-weight: 800;
+    }
+
+    .header p {
+      color: #888;
+      font-size: 14px;
+      margin-top: 5px;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--secondary);
+    }
+
+    .form-group input, 
+    .form-group select, 
+    .form-group textarea {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      font-size: 14px;
+      outline: none;
+      box-sizing: border-box;
+      transition: border-color 0.3s;
+      font-family: inherit;
+    }
+
+    .form-group input:focus, 
+    .form-group select:focus, 
+    .form-group textarea:focus {
+      border-color: var(--primary);
+    }
+
+    .form-group textarea {
+      resize: vertical;
+      min-height: 80px;
+    }
+
+    .btn-submit {
+      width: 100%;
+      background: var(--primary);
+      color: white;
+      border: none;
+      padding: 15px;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 800;
+      cursor: pointer;
+      transition: 0.3s;
+      box-shadow: 0 4px 15px rgba(255,123,44,0.3);
+    }
+
+    .btn-submit:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(255,123,44,0.4);
+    }
+
+    .btn-submit:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
   </style>
 </head>
 <body>
-  <div class="container">
-    <h2>Assigned Escalations 🚨</h2>
-    <div id="loader" class="loader">Fetching your tickets...</div>
-    <table>
-      <thead>
-        <tr>
-          <th>Raised On</th>
-          <th>Learner</th>
-          <th>Issue</th>
-          <th>Status</th>
-          <th>Action</th>
-        </tr>
-      </thead>
-      <tbody id="ticket-list"></tbody>
-    </table>
+
+  <div class="form-container">
+    <div class="header">
+      <h2>Raise a Support Ticket 🎫</h2>
+      <p>Fill out the form below and our team will get back to you.</p>
+    </div>
+
+    <form id="ticketForm" onsubmit="submitForm(event)">
+      <div class="form-group">
+        <label>Raised By *</label>
+        <input type="text" id="raisedBy" required placeholder="Who is raising this ticket? (e.g. Self, Father, Staff Name)">
+      </div>
+
+      <div class="form-group">
+        <label>Full Name *</label>
+        <input type="text" id="name" required placeholder="Enter your full name">
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+        <div class="form-group">
+          <label>Phone Number *</label>
+          <input type="tel" id="phone" required placeholder="Mobile No.">
+        </div>
+        <div class="form-group">
+          <label>Email Address</label>
+          <input type="email" id="email" placeholder="Email (Optional)">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Course Name</label>
+        <select id="course">
+          <option value="N/A" selected>Select Course...</option>
+          <option value="Fashion Designing">Fashion Designing</option>
+          <option value="Cosmetology">Cosmetology</option>
+          <option value="Mastery Program">Mastery Program</option>
+          <option value="Basic Program">Basic Program</option>
+          <option value="Activation Program">Activation Program</option>
+          <option value="NID Program">NID Program</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Issue Type *</label>
+        <select id="issue" required>
+          <option value="" disabled selected>What do you need help with?</option>
+          <option value="NSDC">NSDC</option>
+          <option value="KIT">KIT</option>
+          <option value="Finance">Finance</option>
+          <option value="Training">Training</option>
+          <option value="Onboarding">Onboarding</option>
+          <option value="Cancellation">Cancellation</option>
+          <option value="Exam">Exam</option>
+          <option value="Certificate">Certificate</option>
+          <option value="Portfolio">Portfolio</option>
+          <option value="Extension">Extension</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Description / Remark</label>
+        <textarea id="remark" placeholder="Please describe your issue in detail..."></textarea>
+      </div>
+
+      <button type="submit" class="btn-submit" id="submitBtn">Submit Ticket</button>
+    </form>
   </div>
 
   <script>
-    const API_URL = "<?= scriptUrl ?>";
+    const API_URL = "https://script.google.com/macros/s/AKfycbzZvoyP-WOdDdUFmktk3XS79mIOkq7sWjAcBBXWthAQBwHmMBJRP33PUE_qkusfqxWb/exec"; 
 
-    async function fetchTickets() {
+    async function apiPost(action, dataObj = {}) {
       try {
-        const response = await fetch(API_URL + "?action=getTickets");
-        const data = await response.json();
-        
-        // FILTER: Only show "Escalated" tickets on this portal
-        const escalated = data.filter(t => t.status === "Escalated");
-        
-        const list = document.getElementById('ticket-list');
-        document.getElementById('loader').style.display = 'none';
-        
-        if (escalated.length === 0) {
-          list.innerHTML = '<tr><td colspan="5" style="text-align:center">No pending escalations found! 🎉</td></tr>';
-          return;
-        }
-
-        list.innerHTML = escalated.map(t => `
-          <tr>
-            <td>${t.dateRaised}</td>
-            <td><b>${t.name}</b></td>
-            <td>${t.issue}</td>
-            <td><span class="badge" style="background:#f39c12">${t.status}</span></td>
-            <td><button class="btn-view" onclick='viewTicket(${JSON.stringify(t)})'>Update</button></td>
-          </tr>
-        `).join('');
+        let res = await fetch(API_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify({ action: action, data: dataObj }),
+          redirect: "follow",
+          credentials: "omit" 
+        });
+        return await res.json();
       } catch (e) {
-        alert("Error loading tickets. Please refresh.");
+        console.error("API Error:", e);
+        return { error: e };
       }
     }
 
-    async function viewTicket(t) {
-      const { value: remark } = await Swal.fire({
-        title: 'Resolve Ticket',
-        html: `<div style="text-align:left">
-                <p><b>Issue:</b> ${t.issue}</p>
-                <p><b>Learner:</b> ${t.name}</p>
-                <p><b>Original Remark:</b> ${t.remark}</p>
-                <hr>
-                <label><b>Resolution Remark:</b></label>
-              </div>`,
-        input: 'textarea',
-        inputPlaceholder: 'Enter how you resolved this...',
-        showCancelButton: true,
-        confirmButtonColor: '#2ecc71',
-        confirmButtonText: 'Mark as Solved'
+    async function submitForm(event) {
+      event.preventDefault(); 
+      
+      const btn = document.getElementById('submitBtn');
+      btn.disabled = true;
+      btn.innerText = "Submitting...";
+
+      // Gather Data
+      const ticketData = {
+        raisedBy: document.getElementById('raisedBy').value,
+        name: document.getElementById('name').value,
+        phone: document.getElementById('phone').value,
+        email: document.getElementById('email').value || "-",
+        course: document.getElementById('course').value,
+        issue: document.getElementById('issue').value,
+        remark: document.getElementById('remark').value || "-",
+        source: "Web Form", 
+        priority: "Medium", 
+        assigned: "Unassigned" 
+      };
+
+      // Show Loading Alert
+      Swal.fire({
+        title: 'Please wait...',
+        text: 'Creating your support ticket',
+        allowOutsideClick: false,
+        didOpen: () => {
+          Swal.showLoading();
+        }
       });
 
-      if (remark) {
-        Swal.fire({ title: 'Updating...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
-        
-        await fetch(API_URL, {
-          method: 'POST',
-          body: JSON.stringify({
-            action: 'updateTicketStatus',
-            data: { row: t.row, status: 'Solved', remark: remark }
-          })
+      // API Call
+      const response = await apiPost('saveTicket', ticketData);
+
+      // Handle Response
+      if (response && !response.error) {
+        Swal.fire({
+          icon: 'success',
+          title: 'Ticket Created!',
+          text: 'Our team will contact you shortly.',
+          confirmButtonColor: '#ff7b2c'
         });
-
-        Swal.fire('Success!', 'Ticket marked as solved.', 'success');
-        fetchTickets();
+        document.getElementById('ticketForm').reset();
+      } else {
+        Swal.fire({
+          icon: 'error',
+          title: 'Oops!',
+          text: 'Something went wrong. Please try again.',
+          confirmButtonColor: '#ff7b2c'
+        });
       }
-    }
 
-    window.onload = fetchTickets;
+      btn.disabled = false;
+      btn.innerText = "Submit Ticket";
+    }
   </script>
 </body>
 </html>
