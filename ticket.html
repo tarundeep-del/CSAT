@@ -127,6 +127,17 @@
 
     <form id="ticketForm" onsubmit="submitForm(event)">
       <div class="form-group">
+        <label>Raised By *</label>
+        <select id="raisedBy" required>
+          <option value="" disabled selected>Who is raising this ticket?</option>
+          <option value="Student">Student</option>
+          <option value="Staff">Staff</option>
+          <option value="Parent">Parent</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+
+      <div class="form-group">
         <label>Full Name *</label>
         <input type="text" id="name" required placeholder="Enter your full name">
       </div>
@@ -191,7 +202,7 @@
           headers: { 'Content-Type': 'text/plain;charset=utf-8' },
           body: JSON.stringify({ action: action, data: dataObj }),
           redirect: "follow",
-          credentials: "omit" // 🚀 Added to prevent CORS errors during form submission
+          credentials: "omit" 
         });
         return await res.json();
       } catch (e) {
@@ -207,8 +218,9 @@
       btn.disabled = true;
       btn.innerText = "Submitting...";
 
-      // Gather Data
+      // Gather Data including the new field
       const ticketData = {
+        raisedBy: document.getElementById('raisedBy').value,
         name: document.getElementById('name').value,
         phone: document.getElementById('phone').value,
         email: document.getElementById('email').value || "-",
