@@ -479,9 +479,10 @@
     function apiPost(action, data = {}) { return request("POST", action, data); }
 
     // ==========================================
-    // 📊 DATA LOADERS
+    // 📊 DATA LOADERS & CHARTS
     // ==========================================
     function destroyChart(name) { if (charts[name]) { charts[name].destroy(); charts[name] = null; } }
+    
     function renderCharts(stats) {
       destroyChart("gauge"); destroyChart("dist");
       const centerPlugin = { id: "centerPlugin", afterDraw(chart) { const { ctx, chartArea } = chart; const { top, bottom, left, right, height } = chartArea; const centerX = (left + right) / 2; const centerY = (top + bottom) / 2; ctx.save(); ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.font = `bold ${(height / 3).toFixed(0)}px Segoe UI`; ctx.fillStyle = "#000"; ctx.fillText(stats.nps, centerX, centerY + (height / 8)); ctx.font = `600 ${(height / 8).toFixed(0)}px Segoe UI`; ctx.fillStyle = "#888"; ctx.fillText("CSAT", centerX, centerY + (height / 3.2)); ctx.restore(); } };
@@ -513,12 +514,42 @@
     async function loadTickets() {
       setSyncing(true); const list = await apiGet("getTickets");
       const rows = (list && !list.error ? list : []).map((t) => {
-        const priorityColor = t.priority === "High" || t.priority === "Urgent" ? theme.danger : t.priority === "Medium" ? theme.warning : theme.blue; const statusColor = t.status === "Solved" ? theme.success : t.status === "Escalated" ? theme.warning : theme.danger; const tatHtml = t.tat && t.tat !== "-" && t.tat !== "N/A" ? `<span class="badge" style="background:#3d4466; font-size:11px;">${escapeHtml("⏱️ " + t.tat)}</span>` : `<span style="color:#aaa; font-size:12px; font-weight:600;">Pending</span>`; let issueRemark = t.remark || "-"; let resolutionRemark = ""; if (issueRemark.includes("[Res]:")) { const parts = issueRemark.split("[Res]:"); issueRemark = parts[0].trim(); resolutionRemark = parts.slice(1).join("\nUpdate: ").trim(); } const serializedTicket = encodeURIComponent(JSON.stringify(t));
-        return `<tr class="main-row" style="cursor:pointer;" data-toggle-row="${t.row}"><td style="text-align:center;"><button id="btn-${t.row}" class="toggle-btn" style="pointer-events:none;">▶</button></td><td>${escapeHtml(t.dateRaised)}</td><td><strong>${escapeHtml(t.name)}</strong></td><td>${escapeHtml(t.course)}</td><td><strong>${escapeHtml(t.issue)}</strong></td><td>${makeBadge(t.status, statusColor)}</td></tr><tr id="details-${t.row}" style="display:none;"><td colspan="6" style="padding:0; border-bottom:1px solid #eee;"><div class="detail-row-content"><div><h4 style="margin:0 0 10px; font-size:13px; color:var(--secondary); text-transform:uppercase;">Details</h4><p style="margin:5px 0; font-size:13px;"><strong>Phone:</strong> ${escapeHtml(t.phone)}</p><p style="margin:5px 0; font-size:13px;"><strong>Source:</strong> ${escapeHtml(t.source)}</p><p style="margin:5px 0; font-size:13px;"><strong>Assigned To:</strong> ${escapeHtml(t.assigned)}</p><p style="margin:8px 0; font-size:13px;"><strong>Priority:</strong> <span class="badge" style="background:${priorityColor}; font-size:10px; padding:3px 8px;">${escapeHtml(t.priority)}</span></p></div><div><h4 style="margin:0 0 10px; font-size:13px; color:var(--secondary); text-transform:uppercase;">Timeline & Remarks</h4><p style="margin:5px 0; font-size:13px;"><strong>TAT:</strong> ${tatHtml}</p><p style="margin:5px 0; font-size:13px;"><strong>Resolved On:</strong> ${escapeHtml(t.dateResolved)}</p><p style="margin:5px 0; font-size:13px; color: var(--purple);"><strong>Raised By:</strong> ${escapeHtml(t.raisedBy || "-")}</p><div style="margin-top:10px; padding:10px; background:#fff; border-radius:6px; border:1px solid #eee;"><strong style="font-size:12px; color:#888;">Issue:</strong><p style="margin:5px 0 0; font-size:13px;">${escapeHtml(issueRemark)}</p>${resolutionRemark ? `<div style="margin-top:12px; padding-top:10px; border-top:1px dashed #ddd;"><strong style="font-size:12px; color:#888;">Resolution:</strong><p style="margin:5px 0 0; font-size:13px; color:${t.status === "Escalated" ? theme.warning : theme.success}; font-weight:600;">${escapeHtml(resolutionRemark)}</p></div>` : ""}</div></div><div style="border-left:1px solid #ddd; padding-left:20px; min-width:150px;"><h4 style="margin:0 0 10px; font-size:13px; color:var(--secondary); text-transform:uppercase;">Actions</h4>${t.status === "Solved" ? `<div style="padding-top:10px;"><span style="color:${theme.success}; font-size:13px; font-weight:bold;">✔️ Closed</span></div>` : `<div style="display:flex; flex-direction:column; gap:8px;"><select data-status-row="${t.row}" style="padding:8px; font-size:12px; border:1px solid #ddd; border-radius:5px;"><option value="Untouched" ${t.status === "Untouched" ? "selected" : ""}>Untouched</option><option value="Escalated" ${t.status === "Escalated" ? "selected" : ""}>Escalated</option><option value="Solved" ${t.status === "Solved" ? "selected" : ""}>Solved</option></select><button class="edit-ticket-btn" data-ticket="${serializedTicket}" style="background:var(--primary); border:none; border-radius:5px; padding:8px; cursor:pointer; font-size:12px; font-weight:bold; color:white;">Edit Info</button></div>`}</div></div></td></tr>`;
+        const priorityColor = t.priority === "High" || t.priority === "Urgent" ? theme.danger : t.priority === "Medium" ? theme.warning : theme.blue; 
+        const statusColor = t.status === "Solved" ? theme.success : t.status === "Escalated" ? theme.warning : theme.danger; 
+        const tatHtml = t.tat && t.tat !== "-" && t.tat !== "N/A" ? `<span class="badge" style="background:#3d4466; font-size:11px;">${escapeHtml("⏱️ " + t.tat)}</span>` : `<span style="color:#aaa; font-size:12px; font-weight:600;">Pending</span>`; 
+        let issueRemark = t.remark || "-"; 
+        let resolutionRemark = ""; 
+        if (issueRemark.includes("[Res]:")) { const parts = issueRemark.split("[Res]:"); issueRemark = parts[0].trim(); resolutionRemark = parts.slice(1).join("\nUpdate: ").trim(); } 
+        const serializedTicket = encodeURIComponent(JSON.stringify(t));
+        
+        return `<tr class="main-row" style="cursor:pointer;" data-toggle-row="${t.row}"><td style="text-align:center;"><button id="btn-${t.row}" class="toggle-btn" style="pointer-events:none;">▶</button></td><td>${escapeHtml(t.dateRaised)}</td><td><strong>${escapeHtml(t.name)}</strong></td><td>${escapeHtml(t.course)}</td><td><strong>${escapeHtml(t.issue)}</strong></td><td>${makeBadge(t.status, statusColor)}</td></tr>
+        <tr id="details-${t.row}" style="display:none;"><td colspan="6" style="padding:0; border-bottom:1px solid #eee;"><div class="detail-row-content">
+          <div><h4 style="margin:0 0 10px; font-size:13px; color:var(--secondary); text-transform:uppercase;">Details</h4>
+            <p style="margin:5px 0; font-size:13px;"><strong>Phone:</strong> ${escapeHtml(t.phone)}</p>
+            <p style="margin:5px 0; font-size:13px;"><strong>Source:</strong> ${escapeHtml(t.source)}</p>
+            <p style="margin:5px 0; font-size:13px;"><strong>Assigned To:</strong> ${escapeHtml(t.assigned)}</p>
+            <p style="margin:8px 0; font-size:13px;"><strong>Priority:</strong> <span class="badge" style="background:${priorityColor}; font-size:10px; padding:3px 8px;">${escapeHtml(t.priority)}</span></p>
+          </div>
+          <div><h4 style="margin:0 0 10px; font-size:13px; color:var(--secondary); text-transform:uppercase;">Timeline & Remarks</h4>
+            <p style="margin:5px 0; font-size:13px;"><strong>TAT:</strong> ${tatHtml}</p>
+            <p style="margin:5px 0; font-size:13px;"><strong>Escalated On:</strong> ${escapeHtml(t.dateEscalated || "-")}</p>
+            <p style="margin:5px 0; font-size:13px;"><strong>Resolved On:</strong> ${escapeHtml(t.dateResolved)}</p>
+            <p style="margin:5px 0; font-size:13px; color: var(--purple);"><strong>Raised By:</strong> ${escapeHtml(t.raisedBy || "-")}</p>
+            <div style="margin-top:10px; padding:10px; background:#fff; border-radius:6px; border:1px solid #eee;"><strong style="font-size:12px; color:#888;">Issue:</strong><p style="margin:5px 0 0; font-size:13px;">${escapeHtml(issueRemark)}</p>${resolutionRemark ? `<div style="margin-top:12px; padding-top:10px; border-top:1px dashed #ddd;"><strong style="font-size:12px; color:#888;">Resolution:</strong><p style="margin:5px 0 0; font-size:13px; color:${t.status === "Escalated" ? theme.warning : theme.success}; font-weight:600;">${escapeHtml(resolutionRemark)}</p></div>` : ""}</div>
+          </div>
+          <div style="border-left:1px solid #ddd; padding-left:20px; min-width:150px;"><h4 style="margin:0 0 10px; font-size:13px; color:var(--secondary); text-transform:uppercase;">Actions</h4>
+            ${t.status === "Solved" ? `<div style="padding-top:10px;"><span style="color:${theme.success}; font-size:13px; font-weight:bold;">✔️ Closed</span></div>` : `<div style="display:flex; flex-direction:column; gap:8px;">
+              <select data-status-row="${t.row}" style="padding:8px; font-size:12px; border:1px solid #ddd; border-radius:5px;">
+                <option value="Untouched" ${t.status === "Untouched" ? "selected" : ""}>Untouched</option>
+                <option value="Escalated" ${t.status === "Escalated" ? "selected" : ""}>Escalated</option>
+                <option value="Solved" ${t.status === "Solved" ? "selected" : ""}>Solved (Close)</option>
+              </select>
+              <button class="edit-ticket-btn" data-ticket="${serializedTicket}" style="background:var(--primary); border:none; border-radius:5px; padding:8px; cursor:pointer; font-size:12px; font-weight:bold; color:white;">Edit Info</button>
+            </div>`}
+          </div></div></td></tr>`;
       }); el["tick-body"].innerHTML = rowOrEmpty(rows, 6); setSyncing(false);
     }
     
-    // 👇 FIX: ESCALATION DROPDOWN LOGIC ADDED HERE
   async function handleStatusChange(row, status) { 
       let remark = ""; 
       let escalateTo = "";
@@ -533,38 +564,15 @@
           html: `
             <div style="text-align:left;">
               <label style="font-size:13px; font-weight:bold; color:var(--secondary);">Escalate To (Select Multiple):</label>
-              
               <div style="max-height: 160px; overflow-y: auto; border: 1px solid #ccc; padding: 12px; border-radius: 5px; margin-top: 5px; margin-bottom: 15px; background: #fff;">
-                <label style="display:flex; align-items:center; margin-bottom:10px; cursor:pointer; font-size:14px;">
-                  <input type="checkbox" class="esc-checkbox" value="prateek@skillinabox.in" style="width:16px; height:16px; margin:0 10px 0 0; cursor:pointer;"> 
-                  <span><b>Prateek</b> - CEO</span>
-                </label>
-                <label style="display:flex; align-items:center; margin-bottom:10px; cursor:pointer; font-size:14px;">
-                  <input type="checkbox" class="esc-checkbox" value="kanisk@skillinabox.in" style="width:16px; height:16px; margin:0 10px 0 0; cursor:pointer;"> 
-                  <span><b>Kanisk</b> - Operations</span>
-                </label>
-                <label style="display:flex; align-items:center; margin-bottom:10px; cursor:pointer; font-size:14px;">
-                  <input type="checkbox" class="esc-checkbox" value="tarundeep@skillinabox.in" style="width:16px; height:16px; margin:0 10px 0 0; cursor:pointer;"> 
-                  <span><b>Tarundeep</b> - Admin</span>
-                </label>
-                <label style="display:flex; align-items:center; margin-bottom:10px; cursor:pointer; font-size:14px;">
-                  <input type="checkbox" class="esc-checkbox" value="Pradeep@skillinabox.in" style="width:16px; height:16px; margin:0 10px 0 0; cursor:pointer;"> 
-                  <span><b>Pradeep</b> - Accounts</span>
-                </label>
-                <label style="display:flex; align-items:center; margin-bottom:10px; cursor:pointer; font-size:14px;">
-                  <input type="checkbox" class="esc-checkbox" value="rohit@skillinabox.in" style="width:16px; height:16px; margin:0 10px 0 0; cursor:pointer;"> 
-                  <span><b>Rohit</b> - Finance</span>
-                </label>
-                <label style="display:flex; align-items:center; margin-bottom:10px; cursor:pointer; font-size:14px;">
-                  <input type="checkbox" class="esc-checkbox" value="trainers@skillinabox.in" style="width:16px; height:16px; margin:0 10px 0 0; cursor:pointer;"> 
-                  <span><b>Trainers</b> - Product</span>
-                </label>
-                <label style="display:flex; align-items:center; margin-bottom:0px; cursor:pointer; font-size:14px;">
-                  <input type="checkbox" class="esc-checkbox" value="kishlay@skillinabox.in" style="width:16px; height:16px; margin:0 10px 0 0; cursor:pointer;"> 
-                  <span><b>Kishlay</b> - Sales</span>
-                </label>
+                <label style="display:flex; align-items:center; margin-bottom:10px; cursor:pointer; font-size:14px;"><input type="checkbox" class="esc-checkbox" value="prateek@skillinabox.in" style="width:16px; height:16px; margin:0 10px 0 0; cursor:pointer;"><span><b>Prateek</b> - CEO</span></label>
+                <label style="display:flex; align-items:center; margin-bottom:10px; cursor:pointer; font-size:14px;"><input type="checkbox" class="esc-checkbox" value="kanisk@skillinabox.in" style="width:16px; height:16px; margin:0 10px 0 0; cursor:pointer;"><span><b>Kanisk</b> - Operations</span></label>
+                <label style="display:flex; align-items:center; margin-bottom:10px; cursor:pointer; font-size:14px;"><input type="checkbox" class="esc-checkbox" value="tarundeep@skillinabox.in" style="width:16px; height:16px; margin:0 10px 0 0; cursor:pointer;"><span><b>Tarundeep</b> - Admin</span></label>
+                <label style="display:flex; align-items:center; margin-bottom:10px; cursor:pointer; font-size:14px;"><input type="checkbox" class="esc-checkbox" value="Pradeep@skillinabox.in" style="width:16px; height:16px; margin:0 10px 0 0; cursor:pointer;"><span><b>Pradeep</b> - Accounts</span></label>
+                <label style="display:flex; align-items:center; margin-bottom:10px; cursor:pointer; font-size:14px;"><input type="checkbox" class="esc-checkbox" value="rohit@skillinabox.in" style="width:16px; height:16px; margin:0 10px 0 0; cursor:pointer;"><span><b>Rohit</b> - Finance</span></label>
+                <label style="display:flex; align-items:center; margin-bottom:10px; cursor:pointer; font-size:14px;"><input type="checkbox" class="esc-checkbox" value="trainers@skillinabox.in" style="width:16px; height:16px; margin:0 10px 0 0; cursor:pointer;"><span><b>Trainers</b> - Product</span></label>
+                <label style="display:flex; align-items:center; margin-bottom:0px; cursor:pointer; font-size:14px;"><input type="checkbox" class="esc-checkbox" value="kishlay@skillinabox.in" style="width:16px; height:16px; margin:0 10px 0 0; cursor:pointer;"><span><b>Kishlay</b> - Sales</span></label>
               </div>
-
               <label style="font-size:13px; font-weight:bold; color:var(--secondary);">Escalation Reason:</label>
               <textarea id="esc-reason" style="width:100%; padding:10px; margin-top:5px; border-radius:5px; border:1px solid #ccc; min-height:80px;" placeholder="Why are you escalating this?"></textarea>
             </div>
@@ -576,27 +584,15 @@
             const selectedEmails = Array.from(checkboxes).map(cb => cb.value);
             const to = selectedEmails.join(",");
             const reason = document.getElementById("esc-reason").value.trim();
-            
-            if(selectedEmails.length === 0 || !reason) { 
-              Swal.showValidationMessage("Please select at least one person and enter a reason!"); 
-              return false; 
-            }
+            if(selectedEmails.length === 0 || !reason) { Swal.showValidationMessage("Please select at least one person and enter a reason!"); return false; }
             return { to, reason };
           }
         });
-        
-        if (value) {
-          escalateTo = value.to;
-          remark = value.reason;
-        } else {
-          await loadTickets(); return;
-        }
+        if (value) { escalateTo = value.to; remark = value.reason; } else { await loadTickets(); return; }
       }
-      
       setSyncing(true); await apiPost("updateTicketStatus", { row, status, remark, escalateTo }); await loadTickets(); setSyncing(false); Swal.fire({ icon: "success", title: "Updated!", showConfirmButton: false, timer: 1500 }); 
     }
     
-    // 👇 FIX: RAISED BY LOGIC ADDED HERE
     async function openTicketModal() { 
       const { value } = await Swal.fire({ 
         title: "", width: "550px", showCancelButton: true, confirmButtonText: "Submit Ticket", cancelButtonText: "Cancel", confirmButtonColor: theme.orange, cancelButtonColor: "#aaa", 
@@ -613,8 +609,11 @@
     }
     
     async function openEditModal(ticket) { const { value } = await Swal.fire({ title: "Edit Ticket", showCancelButton: true, confirmButtonColor: theme.orange, cancelButtonColor: "#aaa", confirmButtonText: "Save", html: `<div style="text-align: left; margin-top: 15px;"><div style="margin-bottom: 15px;"><label style="font-size: 13px; font-weight: 600; color: var(--secondary);">Assign To</label><select id="e-a" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px; margin-top: 5px;"><option value="Unassigned" ${ticket.assigned === "Unassigned" ? "selected" : ""}>Unassigned</option><option value="Kumud" ${ticket.assigned === "Kumud" ? "selected" : ""}>Kumud</option><option value="Sanskriti" ${ticket.assigned === "Sanskriti" ? "selected" : ""}>Sanskriti</option><option value="Dhananjaya" ${ticket.assigned === "Dhananjaya" ? "selected" : ""}>Dhananjaya</option></select></div><div><label style="font-size: 13px; font-weight: 600; color: var(--secondary);">Priority</label><select id="e-p" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px; margin-top: 5px;"><option value="Urgent" ${ticket.priority === "Urgent" ? "selected" : ""}>Urgent</option><option value="High" ${ticket.priority === "High" ? "selected" : ""}>High</option><option value="Medium" ${ticket.priority === "Medium" ? "selected" : ""}>Medium</option><option value="Low" ${ticket.priority === "Low" ? "selected" : ""}>Low</option></select></div></div>`, preConfirm: () => ({ assigned: $("e-a").value, priority: $("e-p").value, course: ticket.course, source: ticket.source }) }); if (!value) return; setSyncing(true); await apiPost("editTicketDetails", { row: ticket.row, info: value }); await loadTickets(); setSyncing(false); Swal.fire({ icon: "success", title: "Saved!", showConfirmButton: false, timer: 1500 }); }
+    
     async function loadOnboardTable() { setSyncing(true); const list = await apiGet("getOnboardingTable"); const rows = (list && !list.error ? list : []).map((r) => `<tr><td><strong>${escapeHtml(r.name)}</strong></td><td>${escapeHtml(r.phone)}</td><td>${escapeHtml(r.email)}</td><td>${makeBadge(r.program, theme.blue)}</td><td>${escapeHtml(r.source)}</td></tr>`); el["onboard-body"].innerHTML = rowOrEmpty(rows, 5); setSyncing(false); }
+    
     async function openEnrollModal() { const { value } = await Swal.fire({ title: "New Enrollment", showCancelButton: true, confirmButtonColor: theme.orange, cancelButtonColor: "#aaa", confirmButtonText: "Save Data", html: `<div style="text-align:left; margin-top:15px;"><div style="margin-bottom:15px;"><label style="font-size:13px; font-weight:600; color:var(--secondary);">Course Name *</label><select id="en-c" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px; margin-top:5px;"><option value="" disabled selected>Select Course...</option><option value="Activation">Activation</option><option value="Fashion Designing">Fashion Designing</option><option value="Cosmetology">Cosmetology</option><option value="Others">Others</option></select></div><div style="margin-bottom:15px;"><label style="font-size:13px; font-weight:600; color:var(--secondary);">Enrollment Count *</label><input type="number" id="en-count" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px; margin-top:5px;" placeholder="Number of enrollments"></div><div><label style="font-size:13px; font-weight:600; color:var(--secondary);">Onboarded By *</label><select id="en-by" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px; margin-top:5px;"><option value="Kumud">Kumud</option><option value="Sanskriti">Sanskriti</option><option value="Dhananjaya">Dhananjaya</option><option value="Web">Web (Form)</option></select></div></div>`, preConfirm: () => { const course = $("en-c").value, count = $("en-count").value, by = $("en-by").value; if (!course || !count) { Swal.showValidationMessage("Please fill all fields"); return false; } const now = new Date(); return { course, month: now.toLocaleString("default", { month: "short" }) + "-" + now.getFullYear(), count, by }; } }); if (!value) return; setSyncing(true); await apiPost("saveEnrollmentData", value); await loadEnrollData(); setSyncing(false); Swal.fire({ icon: "success", title: "Saved!", showConfirmButton: false, timer: 1500 }); }
+    
     async function loadEnrollData() { setSyncing(true); const list = await apiGet("getEnrollmentData"); const rows = (list && !list.error ? list : []).map((r) => `<tr><td>${escapeHtml(r.date)}</td><td><strong>${escapeHtml(r.course)}</strong></td><td>${makeBadge(r.count, theme.blue)}</td><td>${escapeHtml(r.by)}</td></tr>`); el["enroll-body"].innerHTML = rowOrEmpty(rows, 4); setSyncing(false); }
 
     // ==========================================
@@ -675,17 +674,14 @@
       setSyncing(true);
       const list = await apiGet("getStudentDatabase");
       const data = list && !list.error ? list : [];
-
       const stateCounts = {};
       data.forEach(s => {
         const stateName = (s.state && s.state.trim() !== "" && s.state !== "-") ? s.state.trim() : "Unknown / Not Specified";
         stateCounts[stateName] = (stateCounts[stateName] || 0) + 1;
       });
-
       const sortedStates = Object.keys(stateCounts).map(key => ({
         stateName: key, count: stateCounts[key]
       })).sort((a, b) => b.count - a.count);
-
       const rows = sortedStates.map(item => `
         <tr>
           <td><strong>${escapeHtml(item.stateName)}</strong></td>
@@ -709,27 +705,15 @@
     // ==========================================
     function switchView(view) {
       const config = viewConfig[view]; if (!config) return;
-      
-      // Hide all views
       $$('[id^="view-"]').forEach((n) => n.classList.add("hidden"));
-      
-      // Remove active states from all sidebar items
       $$(".sidebar li[data-view]").forEach((n) => n.classList.remove("active"));
-      
-      // Show correct view
       $("view-" + view).classList.remove("hidden");
-      
       const activeTab = $("m-" + view); 
       if (activeTab) {
         activeTab.classList.add("active");
-        
-        // Agar yeh kisi group ke andar hai (jaise Onboarding Data), toh parent ko khula rakho
         const parentGroup = activeTab.closest('.menu-group');
-        if (parentGroup) {
-          parentGroup.classList.add('open');
-        }
+        if (parentGroup) { parentGroup.classList.add('open'); }
       }
-      
       el["page-title"].textContent = config.title; el["mobile-view-select"].value = view;
       config.loader();
     }
@@ -738,25 +722,18 @@
     async function initSessions() { const list = await apiGet("getSessions"); if (!list || list.error) return; $$(".session-sel").forEach((select) => { const existing = new Set(Array.from(select.options).map((o) => o.value)); list.forEach((name) => { if (!existing.has(name)) { const option = document.createElement("option"); option.value = name; option.textContent = name; select.appendChild(option); } }); }); }
 
     function bindEvents() {
-      // Sidebar Sub-Menu Toggle
       $$(".sidebar .menu-title").forEach(title => {
         title.addEventListener("click", () => {
           const group = title.closest('.menu-group');
           group.classList.toggle('open');
         });
       });
-
-      // View Switchers
       $$(".sidebar li[data-view]").forEach((item) => { item.addEventListener("click", () => switchView(item.dataset.view)); });
       el["mobile-view-select"].addEventListener("change", (e) => { switchView(e.target.value); });
-      
-      // Other Actions
       $("dash-apply").addEventListener("click", loadDashboardData); $("feed-apply").addEventListener("click", loadFeedbackData); $("rep-apply").addEventListener("click", loadReportsData);
       $("raise-ticket-btn").addEventListener("click", openTicketModal); $("open-enroll-btn").addEventListener("click", openEnrollModal); $("add-task-btn").addEventListener("click", submitTask);
       $$("[data-nsdc-type]").forEach((b) => { b.addEventListener("click", () => openNsdcModal(b.dataset.nsdcType)); });
-      
       if($("student-search")) { $("student-search").addEventListener("keyup", filterStudents); }
-
       el["students-body"].addEventListener("click", (e) => { const toggleRow = e.target.closest("[data-toggle-std]"); if (toggleRow) { toggleStdDetails(toggleRow.dataset.toggleStd); } });
       el["tick-body"].addEventListener("click", (e) => { const toggleRow = e.target.closest("[data-toggle-row]"); if (toggleRow) { toggleDetails(toggleRow.dataset.toggleRow); return; } const editButton = e.target.closest(".edit-ticket-btn"); if (editButton) { const ticket = JSON.parse(decodeURIComponent(editButton.dataset.ticket)); openEditModal(ticket); } });
       el["tick-body"].addEventListener("change", (e) => { const select = e.target.closest("[data-status-row]"); if (select) { handleStatusChange(select.dataset.statusRow, select.value); } });
@@ -768,13 +745,7 @@ async function initApp() {
       bindEvents(); 
       initDefaultDates();
       if (window.Chart && window.ChartDataLabels) { Chart.register(ChartDataLabels); }
-      
-      // 👇 NAYA SUPER-FAST PARALLEL LOADING LOGIC
-      // Ab dono API calls ek sath shoot hongi, ek dusre ka wait nahi karengi!
-      await Promise.all([
-        initSessions(),
-        loadDashboardData()
-      ]);
+      await Promise.all([ initSessions(), loadDashboardData() ]);
     }
 
     window.addEventListener('DOMContentLoaded', checkSavedSession);
