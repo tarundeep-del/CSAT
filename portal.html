@@ -3,99 +3,181 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Escalation Portal</title>
-  <script defer src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <title>Escalation Portal | Login</title>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <style>
     :root { --primary: #ff7b2c; --secondary: #1f2235; --bg: #f4f6fb; --panel: #ffffff; }
-    body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; padding: 20px; }
-    .container { max-width: 1000px; margin: 0 auto; }
-    .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+    body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; padding: 20px; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+    
+    .login-box { background: white; padding: 40px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 100%; max-width: 350px; text-align: center; }
+    .input-group { text-align: left; margin-bottom: 15px; }
+    .input-group label { display: block; font-size: 12px; font-weight: bold; margin-bottom: 5px; }
+    .input-group input { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
+    .btn-login { width: 100%; padding: 12px; background: var(--primary); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
+
+    .container { width: 100%; max-width: 1000px; display: none; align-self: flex-start; }
+    .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; background: white; padding: 15px 25px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
     .card { background: var(--panel); padding: 20px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
-    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+    table { width: 100%; border-collapse: collapse; }
     th { text-align: left; background: #f8f9fa; padding: 12px; border-bottom: 2px solid #eee; }
     td { padding: 12px; border-bottom: 1px solid #eee; font-size: 14px; }
     .badge { padding: 4px 10px; border-radius: 20px; color: #fff; font-size: 11px; font-weight: bold; }
-    .hidden { display: none; }
-    .syncing { opacity: 0.5; pointer-events: none; }
-    .detail-box { background: #f9f9f9; padding: 15px; border-left: 4px solid var(--primary); margin-top: 5px; }
+    .btn-solve { background: #2ecc71; color: white; border: none; padding: 6px 12px; border-radius: 5px; cursor: pointer; }
   </style>
 </head>
 <body>
-  <div class="container">
+
+  <div id="login-section" class="login-box">
+    <h2 style="color:var(--primary)">Escalation Portal</h2>
+    <div class="input-group">
+      <label>Email Address</label>
+      <input type="email" id="email" placeholder="email@skillinabox.in">
+    </div>
+    <div class="input-group">
+      <label>Password</label>
+      <input type="password" id="password" placeholder="••••••••">
+    </div>
+    <button class="btn-login" id="loginBtn" onclick="handleLogin()">Login to Tickets</button>
+  </div>
+
+  <div id="portal-section" class="container">
     <div class="header">
-      <h2 style="color: var(--secondary);">Escalated Tickets 🚨</h2>
-      <button onclick="location.reload()" style="padding: 8px 15px; background: var(--primary); color: white; border: none; border-radius: 5px; cursor: pointer;">Refresh</button>
+      <div>
+        <h3 style="margin:0; color:var(--secondary)">Assigned Escalations 🚨</h3>
+        <small id="welcome-msg" style="color:var(--primary); font-weight:bold;"></small>
+      </div>
+      <div>
+        <button onclick="location.reload()" style="padding: 8px 12px; border: 1px solid #ddd; background:white; border-radius:5px; cursor:pointer;">Refresh</button>
+        <button onclick="logout()" style="padding: 8px 12px; background: #e74c3c; color:white; border:none; border-radius:5px; margin-left:10px;">Logout</button>
+      </div>
     </div>
 
-    <div class="card" id="ticket-list">
-      <div id="loader">Loading assigned tickets...</div>
+    <div class="card">
       <table>
         <thead>
           <tr>
-            <th>Date</th>
-            <th>Learner</th>
-            <th>Issue</th>
+            <th>Raised On</th>
+            <th>Learner Name</th>
+            <th>Issue Type</th>
             <th>Status</th>
             <th>Action</th>
           </tr>
         </thead>
-        <tbody id="lite-tick-body"></tbody>
+        <tbody id="lite-tick-body">
+          <tr><td colspan="5" style="text-align:center;">Checking for assigned tickets...</td></tr>
+        </tbody>
       </table>
     </div>
   </div>
 
   <script>
-    const API_URL = "<?= scriptUrl ?>"; // Auto-filled by Backend
+    const API_URL = "https://script.google.com/macros/s/AKfycbzZvoyP-WOdDdUFmktk3XS79mIOkq7sWjAcBBXWthAQBwHmMBJRP33PUE_qkusfqxWb/exec";
 
-    async function loadAssignedTickets() {
+    async function handleLogin() {
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value.trim();
+      const btn = document.getElementById('loginBtn');
+
+      if(!email || !password) return Swal.fire('Error', 'Please fill credentials', 'error');
+
+      btn.disabled = true;
+      btn.innerText = "Authenticating...";
+
+      try {
+        const res = await fetch(API_URL, {
+          method: 'POST',
+          body: JSON.stringify({ action: 'login', data: { email, password } })
+        });
+        const auth = await res.json();
+
+        if (auth.success) {
+          // Save user data including Name and Department
+          localStorage.setItem('portal_user', JSON.stringify(auth.user));
+          initPortal();
+        } else {
+          Swal.fire('Login Failed', auth.error || 'Invalid Credentials', 'error');
+        }
+      } catch(e) {
+        Swal.fire('Error', 'Server connection failed', 'error');
+      } finally {
+        btn.disabled = false;
+        btn.innerText = "Login to Tickets";
+      }
+    }
+
+    function initPortal() {
+      const user = JSON.parse(localStorage.getItem('portal_user'));
+      if (!user) return;
+
+      document.getElementById('login-section').style.display = 'none';
+      document.getElementById('portal-section').style.display = 'block';
+      document.body.style.alignItems = 'flex-start';
+      document.getElementById('welcome-msg').innerText = `Logged in as: ${user.name}`;
+      
+      loadTickets(user);
+    }
+
+    async function loadTickets(user) {
+      const body = document.getElementById('lite-tick-body');
+      
       const res = await fetch(API_URL + "?action=getTickets");
       const list = await res.json();
-      const body = document.getElementById('lite-tick-body');
-      document.getElementById('loader').classList.add('hidden');
       
-      // Note: You can filter by assigned name here if you want to hardcode for specific users
-      const rows = (list || []).map(t => `
+      /* FILTER LOGIC:
+         1. Sirf 'Escalated' status wale dikhenge.
+         2. Agar user ka department 'Admin' (or any keyword) nahi hai,
+            toh wahi tickets dikhenge jisme 'Assigned To' column user ke Name se match kare.
+      */
+      
+      const filtered = list.filter(t => {
+        const isEscalated = t.status === "Escalated";
+        
+        // Agar aapke 'Users' sheet me department 'Admin' likha hai toh sab dikhega
+        if (user.department === "Admin") return isEscalated;
+        
+        // Warna sirf apne naam wale tickets
+        const isAssignedToMe = String(t.assigned).toLowerCase().includes(user.name.toLowerCase());
+        return isEscalated && isAssignedToMe;
+      });
+
+      body.innerHTML = filtered.map(t => `
         <tr>
           <td>${t.dateRaised}</td>
           <td><b>${t.name}</b></td>
           <td>${t.issue}</td>
-          <td><span class="badge" style="background: ${t.status === 'Solved' ? '#2ecc71' : '#f39c12'}">${t.status}</span></td>
-          <td><button onclick="viewDetails('${encodeURIComponent(JSON.stringify(t))}')">View</button></td>
+          <td><span class="badge" style="background:#f39c12">Escalated</span></td>
+          <td><button class="btn-solve" onclick="solveTicket(${t.row})">Mark Solved</button></td>
         </tr>
-      `).join('');
-      body.innerHTML = rows || "<tr><td colspan='5'>No tickets found.</td></tr>";
+      `).join('') || "<tr><td colspan='5' style='text-align:center;'>No tickets assigned to you right now.</td></tr>";
     }
 
-    function viewDetails(data) {
-      const t = JSON.parse(decodeURIComponent(data));
-      Swal.fire({
-        title: 'Ticket Details',
-        html: `<div style="text-align:left; font-size: 14px;">
-                <p><b>Issue:</b> ${t.issue}</p>
-                <p><b>Remark:</b> ${t.remark}</p>
-                <p><b>Escalated On:</b> ${t.dateEscalated || '-'}</p>
-                <hr>
-                <label>Add Resolution Note:</label>
-                <textarea id="res-note" style="width:100%; height:60px; margin-top:5px;"></textarea>
-               </div>`,
+    async function solveTicket(row) {
+      const { value: remark } = await Swal.fire({
+        title: 'Submit Resolution',
+        input: 'textarea',
+        inputPlaceholder: 'Enter resolution details...',
         showCancelButton: true,
-        confirmButtonText: 'Mark as Solved',
-        preConfirm: () => {
-          return document.getElementById('res-note').value;
-        }
-      }).then(async (result) => {
-        if (result.isConfirmed) {
-          await fetch(API_URL, {
-            method: 'POST',
-            body: JSON.stringify({ action: 'updateTicketStatus', data: { row: t.row, status: 'Solved', remark: result.value }})
-          });
-          Swal.fire('Success', 'Ticket Solved', 'success');
-          loadAssignedTickets();
-        }
+        confirmButtonText: 'Submit & Close'
       });
+
+      if (remark) {
+        Swal.fire({ title: 'Updating...', didOpen: () => Swal.showLoading() });
+        await fetch(API_URL, {
+          method: 'POST',
+          body: JSON.stringify({ action: 'updateTicketStatus', data: { row: row, status: 'Solved', remark: remark } })
+        });
+        Swal.fire('Success', 'Ticket marked as Solved', 'success').then(() => location.reload());
+      }
     }
 
-    window.onload = loadAssignedTickets;
+    function logout() {
+      localStorage.removeItem('portal_user');
+      location.reload();
+    }
+
+    window.onload = () => {
+      if (localStorage.getItem('portal_user')) initPortal();
+    };
   </script>
 </body>
 </html>
